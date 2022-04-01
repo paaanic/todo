@@ -1,12 +1,12 @@
-from audioop import reverse
-from datetime import datetime
-
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.urls import reverse_lazy
+from django.http import HttpResponseRedirect
+from django.shortcuts import get_object_or_404
+from django.urls import reverse, reverse_lazy
+from django.utils import timezone
+from django.views.generic import TemplateView, View
+from django.views.generic.detail import SingleObjectMixin
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
-from django.views.generic import DetailView, TemplateView
 
-from .forms import TaskForm
 from .mixins import (
     UserIsTaskAuthorTestMixin, 
     UserIsTaskAuthorNotificationTestMixin
@@ -14,15 +14,17 @@ from .mixins import (
 from .models import Task, TaskNotification
 
 
-class IndexView(
+class TaskListView(
     LoginRequiredMixin, TemplateView
 ):
     template_name = 'tasks/index.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['active_tasks'] = Task.objects.filter(done=False)
+        context['active_tasks'] = [t for t in Task.objects.all() if t.active]
         context['done_tasks'] = Task.objects.filter(done=True)
+        context['failed_tasks'] = [t for t in Task.objects.all() if t.failed]
+        return context
 
 
 class TaskCreateView(LoginRequiredMixin, CreateView):
@@ -43,6 +45,20 @@ class TaskUpdateView(
     template_name = 'tasks/update.html'
     fields = ['title', 'comment', 'expire_date']
     success_url = reverse_lazy('tasks:index')
+
+
+class TaskDoneView(
+    LoginRequiredMixin, UserIsTaskAuthorTestMixin, SingleObjectMixin, View
+):
+    model = Task
+
+    def post(self, request, *args, **kwargs):
+        now = timezone.now()
+        task = get_object_or_404(Task, pk=self.kwargs['pk'])
+        task.done = True
+        task.done_time = now
+        task.save()
+        return HttpResponseRedirect(reverse('tasks:index'))
 
 
 class TaskDeleteView(
