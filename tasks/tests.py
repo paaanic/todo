@@ -168,6 +168,45 @@ class TaskDeleteViewTest(TestCase):
         self.assertEqual(response.status_code, 403)
 
 
+class TaskDoneViewTest(TestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create(username='testuser')
+        self.client.force_login(self.user)
+
+    def test_url(self):
+        task = create_test_task(author=self.user)
+        response = self.client.post(f'/tasks/{task.id}/done/')
+        self.assertEqual(response.status_code, 302)
+
+    def test_url_name(self):
+        task = create_test_task(author=self.user)
+        response = self.client.post(reverse('tasks:done', args=(task.id,)))
+        self.assertEqual(response.status_code, 302)
+
+    def test_view_makes_task_done(self):
+        task = create_test_task(author=self.user)
+        response = self.client.post(reverse('tasks:done', args=(task.id,)))
+        self.assertEqual(response.status_code, 302)
+        task.refresh_from_db()
+        self.assertTrue(task.done)
+
+    def test_login_required(self):
+        self.client.logout()
+        task = create_test_task(author=self.user)
+        url = reverse('tasks:done', args=(task.id,))
+        response = self.client.post(url, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.request['PATH_INFO'], reverse('login'))
+
+    def test_no_permission_for_non_author(self):
+        self.client.logout()
+        user = get_user_model().objects.create(username='notauthor')
+        self.client.force_login(user)
+        task = create_test_task(author=self.user)
+        response = self.client.post(reverse('tasks:done', args=(task.id,)))
+        self.assertEqual(response.status_code, 403)
+
+
 class TaskModelTest(TestCase):
     def setUp(self):
         self.author = get_user_model().objects.create(username='testuser')
@@ -195,6 +234,16 @@ class TaskModelTest(TestCase):
         task = create_test_task(author=self.author, expire_date=expire_date)
         sleep(2.01)
         self.assertTrue(task.failed)
+
+    def test_active_property(self):
+        expire_date = timezone.now() + timedelta(minutes=30)
+        task = create_test_task(author=self.author, expire_date=expire_date)
+        self.assertTrue(task.active)
+        task.done = True
+        self.assertFalse(task.active)
+        task.done = False
+        task.expire_date = None
+        self.assertTrue(task.active)
 
 
 class TaskNotificationModelTest(TestCase):
