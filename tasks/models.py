@@ -13,7 +13,7 @@ class Task(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE
     )
-    comment = models.TextField(blank=True)
+    comment = models.CharField(max_length=100, blank=True)
     create_date = models.DateTimeField(auto_now_add=True)
     expire_date = models.DateTimeField(blank=True, null=True)
     done = models.BooleanField(default=False)
@@ -22,7 +22,8 @@ class Task(models.Model):
     @property
     def active(self):
         return (
-            not self.done and (timezone.now() <= self.expire_date)
+            self.expire_date is None 
+            or not self.done and (timezone.now() <= self.expire_date)
         )
 
     @property
