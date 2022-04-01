@@ -17,13 +17,17 @@ class Task(models.Model):
     create_date = models.DateTimeField(auto_now_add=True)
     expire_date = models.DateTimeField(blank=True, null=True)
     done = models.BooleanField(default=False)
+    done_date = models.DateTimeField(default=None, null=True)
+
+    @property
+    def active(self):
+        return (
+            not self.done and (timezone.now() <= self.expire_date)
+        )
 
     @property
     def failed(self):
-        return (
-            not self.done 
-            and timezone.now() >= (self.expire_date + timedelta(seconds=1))
-        )
+        return not (self.done or self.active)
 
     def __str__(self):
         return self.title
@@ -34,6 +38,11 @@ class Task(models.Model):
         if self.expire_date and self.expire_date <= create_date:
             raise ValidationError(
                 'Task expiration date cannot be from the past'
+            )
+        
+        if not self.done and self.done_date is not None:
+            raise ValidationError(
+                'Task done date cannot be filled when task is not done'
             )
 
     def save(self, *args, **kwargs):
