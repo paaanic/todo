@@ -22,8 +22,8 @@ class Task(models.Model):
     @property
     def active(self):
         return (
-            self.expire_date is None 
-            or not self.done and (timezone.now() <= self.expire_date)
+            not self.done and
+            (self.expire_date is None or (timezone.now() <= self.expire_date))
         )
 
     @property

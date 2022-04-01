@@ -1,4 +1,5 @@
 from datetime import timedelta
+from itertools import product
 from time import sleep
 
 from django.contrib.auth import get_user_model
@@ -237,13 +238,15 @@ class TaskModelTest(TestCase):
 
     def test_active_property(self):
         expire_date = timezone.now() + timedelta(minutes=30)
-        task = create_test_task(author=self.author, expire_date=expire_date)
-        self.assertTrue(task.active)
-        task.done = True
-        self.assertFalse(task.active)
-        task.done = False
-        task.expire_date = None
-        self.assertTrue(task.active)
+        task = create_test_task(author=self.author)
+        combs = zip(
+            product((True, False), (expire_date, None)), 
+            [False, False, True, True]
+        )
+        for (done, expire_date), answer in combs:
+            task.done = done
+            task.expire_date = expire_date
+            self.assertEqual(task.active, answer)
 
 
 class TaskNotificationModelTest(TestCase):
