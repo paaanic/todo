@@ -4,6 +4,7 @@ from time import sleep
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
+from django.forms.models import model_to_dict
 from django.test import TestCase
 from django.utils import timezone
 from django.urls import reverse
@@ -31,6 +32,30 @@ def create_test_notification(*, task, dt_before_expire=timedelta(minutes=1)):
         task=task,
         dt_before_expire=dt_before_expire
     )
+
+
+class TaskIndexViewTest(TestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create(username='testuser')
+        self.client.force_login(self.user)
+
+    def test_url(self):
+        response = self.client.get('/tasks/')
+        self.assertEqual(response.status_code, 200)
+
+    def test_url_name(self):
+        response = self.client.get(reverse('tasks:index'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_view_uses_correct_template(self):
+        response = self.client.get(reverse('tasks:index'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'tasks/index.html')
+
+    def test_login_required(self):
+        self.client.logout()
+        response = self.client.get(reverse('tasks.index'), follow=True)
+        self.assertEqual(response.request['PATH_INFO'], reverse('login'))
 
 
 class TaskCreateViewTest(TestCase):
@@ -73,6 +98,72 @@ class TaskCreateViewTest(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.request['PATH_INFO'], reverse('login'))
+
+
+class TaskRepeatViewTest(TestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create(username='testuser')
+        self.client.force_login(self.user)
+        self.task = create_test_task(author=self.user)
+        self.task.done = True
+        self.task.save()
+
+    def test_url(self):
+        response = self.client.get(f'/tasks/{self.task.id}/repeat/')
+        self.assertEqual(response.status_code, 200)
+
+    def test_url_name(self):
+        url = reverse('tasks:repeat', args=(self.task.id,))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_view_uses_correct_template(self):
+        url = reverse('tasks:repeat', args=(self.task.id,))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'tasks/repeat.html')
+        
+    def test_view_form_initial_data(self):
+        url = reverse('tasks:repeat', args=(self.task.id,))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        initial_data = response.context['form'].initial
+        object_dict = model_to_dict(self.task)
+        object_form_fields = {k: object_dict[k] for k in initial_data}
+        self.assertEqual(object_form_fields, initial_data)
+
+    def test_view_creates_task(self):
+        url = reverse('tasks:repeat', args=(self.task.id,))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        initial_data = response.context['form'].initial
+        response = self.client.post(url, initial_data)
+        self.assertEqual(response.status_code, 302)
+        new_task = Task.objects.last()
+        self.assertEqual(new_task.title, self.task.title)
+        self.assertEqual(new_task.comment, self.task.comment)
+        self.assertEqual(new_task.expire_date, self.task.expire_date)
+
+    def test_forbidden_for_active_task(self):
+        task = create_test_task(author=self.user)
+        url = reverse('tasks:repeat', args=(task.id,))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 403)
+        
+    def test_login_required(self):
+        self.client.logout()
+        url = reverse('tasks:repeat', args=(self.task.id,))
+        response = self.client.get(url, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.request['PATH_INFO'], reverse('login'))
+
+    def test_no_permission_for_non_author(self):
+        self.client.logout()
+        user = get_user_model().objects.create(username='notauthor')
+        self.client.force_login(user)
+        url = reverse('tasks:repeat', args=(self.task.id,))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 403)
 
 
 class TaskUpdateViewTest(TestCase):
