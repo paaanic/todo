@@ -1,11 +1,19 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpResponseRedirect
-from django.shortcuts import get_object_or_404
+from django.http import HttpResponseForbidden, HttpResponseRedirect
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.views.generic import TemplateView, View
-from django.views.generic.detail import SingleObjectMixin
-from django.views.generic.edit import CreateView, DeleteView, UpdateView
+from django.views.generic.detail import (
+    SingleObjectMixin,
+    SingleObjectTemplateResponseMixin
+)
+from django.views.generic.edit import (
+    CreateView,
+    DeleteView,
+    ModelFormMixin,
+    ProcessFormView,
+    UpdateView
+)
 
 from .mixins import (
     UserIsTaskAuthorTestMixin, 
@@ -14,7 +22,7 @@ from .mixins import (
 from .models import Task, TaskNotification
 
 
-class TaskListView(
+class TaskIndexView(
     LoginRequiredMixin, TemplateView
 ):
     template_name = 'tasks/index.html'
@@ -55,7 +63,7 @@ class TaskDoneView(
 
     def post(self, request, *args, **kwargs):
         now = timezone.now()
-        task = get_object_or_404(Task, pk=self.kwargs['pk'])
+        task = self.get_object()
         task.done = True
         task.done_date = now
         task.save()
@@ -68,6 +76,35 @@ class TaskDeleteView(
     model = Task
     template_name = 'tasks/delete.html'
     success_url = reverse_lazy('tasks:index')
+
+
+class TaskRepeatView(
+    LoginRequiredMixin,
+    UserIsTaskAuthorTestMixin,
+    SingleObjectTemplateResponseMixin,
+    ModelFormMixin,
+    ProcessFormView
+):
+    model = Task
+    template_name = 'tasks/repeat.html'
+    fields = ['title', 'comment', 'expire_date']
+    success_url = reverse_lazy('tasks:index')
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+
+        if self.object.active:
+            return HttpResponseForbidden()
+            
+        return super().get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        self.object = None
+        return super().post(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        form.instance.author = self.request.user
+        return super().form_valid(form)
 
 
 class TaskNotificationCreateView(

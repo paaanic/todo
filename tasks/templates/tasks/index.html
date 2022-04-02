@@ -89,6 +89,11 @@
                     Here could be your comment.
                   {% endif %}
                 </p>
+                <div class="d-flex">
+                  <div class="ms-auto">
+                    <a href="{% url 'tasks:repeat' task.id %}" class="btn btn-primary" type="submit">Repeat</a>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
