@@ -32,9 +32,9 @@
     </div>
     {% else %}
       <div class="container-fluid">
-        <div class="row col-3">
+        <div class="row">
           {% for task in active_tasks %}
-            <div class="col-sm p-2 vw-30 vh-30">
+            <div class="col-sm-6 col-md-4 col-lg-4 col-xl-4 p-2">
               <div class="card">
                 <div class="card-header">
                   Expires at {{ task.expire_date }}
@@ -104,7 +104,11 @@
   </div>
   <div class="tab-pane fade" id="tasks-failed" role="tabpanel" aria-labelledby="tasks-failed-tab">
     {% if failed_tasks|length == 0 %}
-      <h3>No failed tasks</h3>
+    <div class="jumbotron align-self-center">
+      <h2 class="display-4">Well done!</h2>
+      <p class="lead">There're no failed tasks.</p>
+     
+    </div>
     {% else %}
     <div class="container-fluid">
       <div class="row">
@@ -125,9 +129,7 @@
                 </p>
                 <div class="d-flex">
                   <div class="ms-auto">
-                    <form action="{% url 'tasks:done' task.id %}" method="post">{% csrf_token %}
-                      <button class="btn btn-primary" type="submit">Repeat</button>
-                    </form>
+                    <a href="{% url 'tasks:repeat' task.id %}" class="btn btn-primary" type="submit">Repeat</a>
                   </div>
                 </div>
               </div>
