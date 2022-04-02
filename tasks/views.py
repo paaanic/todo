@@ -21,9 +21,10 @@ class TaskListView(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['active_tasks'] = [t for t in Task.objects.all() if t.active]
-        context['done_tasks'] = Task.objects.filter(done=True)
-        context['failed_tasks'] = [t for t in Task.objects.all() if t.failed]
+        all_tasks = Task.objects.all().order_by('-create_date')
+        context['active_tasks'] = [t for t in all_tasks if t.active]
+        context['done_tasks'] = Task.objects.filter(done=True).order_by('-done_date')
+        context['failed_tasks'] = [t for t in all_tasks if t.failed]
         return context
 
 
@@ -56,7 +57,7 @@ class TaskDoneView(
         now = timezone.now()
         task = get_object_or_404(Task, pk=self.kwargs['pk'])
         task.done = True
-        task.done_time = now
+        task.done_date = now
         task.save()
         return HttpResponseRedirect(reverse('tasks:index'))
 
