@@ -11,9 +11,9 @@ urlpatterns = [
         name='list'
     ),
     path(
-        'friends/add/<slug:username>/',
-        views.FriendAddView.as_view(),
-        name='add'
+        'friends/add/',
+        views.FriendshipRequestCreateView.as_view(),
+        name='create_friendship_request'
     ),
     path(
         'friends/remove/<slug:username>/',

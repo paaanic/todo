@@ -70,15 +70,20 @@ class FriendshipRequest(models.Model):
         )
 
     def clean(self):
-        if self.from_user == self.to_user:
-            raise ValidationError("Users can't create a friendship request to themselves")
+        try:
+            if self.from_user == self.to_user:
+                raise ValidationError("Users can't create a friendship request to themselves")
+        except (
+            FriendshipRequest.from_user.RelatedObjectDoesNotExist,
+            FriendshipRequest.to_user.RelatedObjectDoesNotExist
+        ):
+            pass
         
     def save(self, *args, **kwargs):
         self.clean()
         super().save(*args, **kwargs)
 
     def accept(self):
-        Friend.objects.create(from_user=self.to_user, to_user=self.from_user)
         Friend.objects.create(from_user=self.from_user, to_user=self.to_user)
 
         self.delete()
