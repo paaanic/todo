@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-from django.forms import CharField, Form
+from django.forms import CharField, Form, Textarea, TextInput
 
 from . import manager as friendship_manager
 from .models import FriendshipRequest
@@ -10,6 +10,7 @@ user_model = get_user_model()
 
 class FriendshipRequestForm(Form):
     to_username = CharField(label='Username')
+    message = CharField(max_length=255, widget=Textarea(), required=False)
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None)
