@@ -77,6 +77,7 @@ class FriendDeleteView(LoginRequiredMixin, DeleteView):
 
 class FriendshipRequestListView(LoginRequiredMixin, ListView):
     template_name = 'friendships/friendship_request_list.html'
+    context_object_name = 'friend_requests'
 
     def get_queryset(self):
         return (
@@ -87,6 +88,7 @@ class FriendshipRequestListView(LoginRequiredMixin, ListView):
 
 class SentFriendshipRequestListView(LoginRequiredMixin, ListView):
     template_name = 'friendships/sent_friendship_request_list.html'
+    context_object_name = 'sent_friend_requests'
 
     def get_queryset(self):
         return (
