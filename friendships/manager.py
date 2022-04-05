@@ -28,13 +28,13 @@ def are_friends(user1, user2):
         return False
 
 
-def add_friend(from_user, to_user):
+def add_friend(from_user, to_user, message=""):
     if are_friends(from_user, to_user):
         raise Friend.AlreadyExists("Users are already friends")
     
     try:
         FriendshipRequest.objects.create(
-            from_user=from_user, to_user=to_user
+            from_user=from_user, to_user=to_user, message=message
         )
     except IntegrityError:
         raise FriendshipRequest.AlreadyExists(
