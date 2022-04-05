@@ -218,14 +218,46 @@ class SentFriendshipRequestListView(TestCase):
         url = reverse('friendships:sent_friendship_request_list')
         response = self.client.get(url)
         fr1 = FriendshipRequest.objects.create(
-            from_user=self.user2, to_user=self.user1
+            from_user=self.user1, to_user=self.user2
         )
         fr2 = FriendshipRequest.objects.create(
             from_user=self.user3, to_user=self.user1
         )
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, fr1.from_user.username)
-        self.assertContains(response, fr2.from_user.username)
+        self.assertContains(response, fr1.to_user.username)
+        self.assertNotContains(response, fr2.from_user.username)
+
+
+class FriendshipRequestDetailViewTest(TransactionTestCase):
+    def setUp(self):
+        self.user1, self.user2, self.user3 = create_bunch_of_test_users(3)
+        self.client.force_login(self.user1)
+        self.friend_request = FriendshipRequest.objects.create(
+            from_user=self.user2, to_user=self.user1
+        )
+
+    def test_url(self):
+        url = f'/friends/requests/{self.friend_request.id}/'
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_url_name(self):
+        url = reverse(
+            'friendships:friendship_request_detail', 
+            args=(self.friend_request.id,)
+        )
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_use_correct_template(self):
+        url = reverse(
+            'friendships:friendship_request_detail', 
+            args=(self.friend_request.id,)
+        )
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        template_name = 'friendships/friendship_request_detail.html'
+        self.assertTemplateUsed(response, template_name)
 
 
 class FriendshipRequestAcceptViewTest(TransactionTestCase):
@@ -238,16 +270,24 @@ class FriendshipRequestAcceptViewTest(TransactionTestCase):
 
     def test_url(self):
         url = f'/friends/requests/{self.friend_request.id}/accept/'
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 302)
 
     def test_url_name(self):
         url = reverse(
             'friendships:accept_friendship_request', 
             args=(self.friend_request.id,)
         )
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 302)
+
+    def test_get_not_allowed(self):
+        url = reverse(
+            'friendships:accept_friendship_request', 
+            args=(self.friend_request.id,)
+        )
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 405)
 
     def test_accept(self):
         url = reverse(
@@ -293,16 +333,24 @@ class FriendshipRequestRejectViewTest(TestCase):
 
     def test_url(self):
         url = f'/friends/requests/{self.friend_request.id}/reject/'
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 302)
 
     def test_url_name(self):
         url = reverse(
             'friendships:reject_friendship_request', 
             args=(self.friend_request.id,)
         )
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 302)
+
+    def test_get_not_allowed(self):
+        url = reverse(
+            'friendships:reject_friendship_request', 
+            args=(self.friend_request.id,)
+        )
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 405)
 
     def test_reject(self):
         url = reverse(

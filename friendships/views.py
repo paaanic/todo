@@ -3,9 +3,9 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.forms import Form
 from django.http import HttpResponseRedirect
 from django.urls import reverse_lazy
-from django.views.generic import ListView
-from django.views.generic.detail import BaseDetailView, SingleObjectTemplateResponseMixin
-from django.views.generic.edit import DeleteView, FormMixin, ProcessFormView
+from django.views.generic import View, DeleteView, DetailView, ListView
+from django.views.generic.detail import SingleObjectMixin, SingleObjectTemplateResponseMixin
+from django.views.generic.edit import FormMixin, ProcessFormView
 
 from . import manager as friendships_manager
 from .forms import FriendshipRequestForm
@@ -56,9 +56,10 @@ class FriendshipRequestCreateView(
 
     def form_valid(self, form):
         to_username = form.cleaned_data.get('to_username')
+        msg = form.cleaned_data.get('message')
         try:
             to_user = user_model.objects.get(username=to_username)
-            friendships_manager.add_friend(self.request.user, to_user)
+            friendships_manager.add_friend(self.request.user, to_user, msg)
         except user_model.DoesNotExist:
             pass
         return HttpResponseRedirect(self.get_success_url())
@@ -94,8 +95,14 @@ class SentFriendshipRequestListView(LoginRequiredMixin, ListView):
         )
 
 
+class FriendshipRequestDetailView(DetailView):
+    model = FriendshipRequest
+    template_name = 'friendships/friendship_request_detail.html'
+    context_object_name = 'friend_req'
+
+
 class BaseFriendshipRequestActionView(
-    SingleObjectTemplateResponseMixin, FormMixin, BaseDetailView
+    FormMixin, SingleObjectMixin, View
 ):
     model = FriendshipRequest
     form_class = Form
@@ -123,8 +130,6 @@ class FriendshipRequestAcceptView(
     UserIsFriendshipRequestReceiverTestMixin,
     BaseFriendshipRequestActionView
 ):
-    template_name = 'friendships/accept_friendship_request.html'
-
     def action(self, friendship_request):
         friendship_request.accept()
 
@@ -134,8 +139,5 @@ class FriendshipRequestRejectView(
     UserIsFriendshipRequestReceiverTestMixin,
     BaseFriendshipRequestActionView
 ):
-    template_name = 'friendships/reject_friendship_request.html'
-    success_url = reverse_lazy('friendships:list')
-
     def action(self, friendship_request):
         friendship_request.reject()

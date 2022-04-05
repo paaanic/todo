@@ -31,6 +31,11 @@ urlpatterns = [
         name='sent_friendship_request_list'
     ),
     path(
+        'friends/requests/<int:pk>/',
+        views.FriendshipRequestDetailView.as_view(),
+        name='friendship_request_detail'
+    ),
+    path(
         'friends/requests/<int:pk>/accept/',
         views.FriendshipRequestAcceptView.as_view(),
         name='accept_friendship_request'
