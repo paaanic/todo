@@ -45,6 +45,35 @@ class FriendListViewTest(TransactionTestCase):
         self.assertEqual(response.request['PATH_INFO'], reverse('login'))
 
 
+class FriendDeleteViewTest(TransactionTestCase):
+    def setUp(self):
+        self.user1, self.user2 = create_bunch_of_test_users(2)
+        self.client.force_login(self.user1)
+        Friend.objects.create(from_user=self.user1, to_user=self.user2)
+
+    def test_url(self):
+        response = self.client.get(f'/friends/remove/{self.user2.username}/')
+        self.assertEqual(response.status_code, 200)
+
+    def test_url_name(self):
+        url = reverse('friendships:delete', args=(self.user2.username,))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_use_correct_template(self):
+        url = reverse('friendships:delete', args=(self.user2.username,))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'friendships/delete.html')
+
+    def test_delete_user_friend_and_redirect(self):
+        url = reverse('friendships:delete', args=(self.user2.username,))
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 302)
+        are_friends = friendship_manager.are_friends(self.user1, self.user2)
+        self.assertFalse(are_friends)
+
+
 class FriendshipRequestCreateViewTest(TransactionTestCase):
     def setUp(self):
         self.user1, self.user2 = create_bunch_of_test_users(2)
@@ -66,7 +95,7 @@ class FriendshipRequestCreateViewTest(TransactionTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'friendships/add.html')
 
-    def test_add_friendship_request_and_redirect(self):
+    def test_create_friendship_request(self):
         url = reverse('friendships:create_friendship_request')
         response = self.client.post(url, self.create_form)
         self.assertEqual(response.status_code, 302)
@@ -76,6 +105,23 @@ class FriendshipRequestCreateViewTest(TransactionTestCase):
             FriendshipRequest.objects.get(
                 from_user=self.user1, to_user=self.user2
             )
+        except FriendshipRequest.DoesNotExist:
+            self.fail("Friendship request hasn't been created")
+
+    def test_create_friendship_request_with_message(self):
+        url = reverse('friendships:create_friendship_request')
+        response = self.client.post(
+            url, dict(self.create_form, message="Test message")
+        )
+        
+        self.assertEqual(response.status_code, 302)
+        are_friends = friendship_manager.are_friends(self.user1, self.user2)
+        self.assertFalse(are_friends)
+        try:
+            fr = FriendshipRequest.objects.get(
+                from_user=self.user1, to_user=self.user2
+            )
+            self.assertEqual(fr.message, "Test message")
         except FriendshipRequest.DoesNotExist:
             self.fail("Friendship request hasn't been created")
 
@@ -111,35 +157,6 @@ class FriendshipRequestCreateViewTest(TransactionTestCase):
         response = self.client.get(url, follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.request['PATH_INFO'], reverse('login'))
-
-
-class FriendDeleteViewTest(TransactionTestCase):
-    def setUp(self):
-        self.user1, self.user2 = create_bunch_of_test_users(2)
-        self.client.force_login(self.user1)
-        Friend.objects.create(from_user=self.user1, to_user=self.user2)
-
-    def test_url(self):
-        response = self.client.get(f'/friends/remove/{self.user2.username}/')
-        self.assertEqual(response.status_code, 200)
-
-    def test_url_name(self):
-        url = reverse('friendships:delete', args=(self.user2.username,))
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-
-    def test_use_correct_template(self):
-        url = reverse('friendships:delete', args=(self.user2.username,))
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'friendships/delete.html')
-
-    def test_delete_user_friend_and_redirect(self):
-        url = reverse('friendships:delete', args=(self.user2.username,))
-        response = self.client.post(url)
-        self.assertEqual(response.status_code, 302)
-        are_friends = friendship_manager.are_friends(self.user1, self.user2)
-        self.assertFalse(are_friends)
 
 
 class FriendshipRequestListView(TestCase):
@@ -198,7 +215,8 @@ class SentFriendshipRequestListView(TestCase):
         )
     
     def test_page_contain_friendship_request_list(self):
-        response = self.client.get(reverse('friendships:friendship_request_list'))
+        url = reverse('friendships:sent_friendship_request_list')
+        response = self.client.get(url)
         fr1 = FriendshipRequest.objects.create(
             from_user=self.user2, to_user=self.user1
         )
