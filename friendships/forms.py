@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-from django.forms import CharField, Form, Textarea, TextInput
+from django.forms import CharField, Form, Textarea, TextInput, ValidationError
 
 from . import manager as friendship_manager
 from .models import FriendshipRequest
@@ -17,9 +17,16 @@ class FriendshipRequestForm(Form):
         super().__init__(*args, **kwargs)
 
     def clean(self):
-        to_username = self.cleaned_data['to_username']
-        self.cleaned_data['to_username'] = to_username.strip()
         cleaned_data = super().clean()
+        
+        to_username = self.cleaned_data.get('to_username')
+        if to_username is None: 
+            self.add_error(
+                'to_username', 'Username field is required'
+            )
+            return 
+
+        self.cleaned_data['to_username'] = to_username.strip()
         to_username = cleaned_data['to_username']
 
         try:
