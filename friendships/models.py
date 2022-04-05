@@ -35,9 +35,6 @@ class FriendshipUser(get_user_model()):
     def remove_friend(self, to_user):
         friend = Friend.objects.get(from_user=self, to_user=to_user)
         friend.delete()
-        friend_reverse = Friend.objects.get(from_user=to_user, to_user=self)
-        friend_reverse.delete()
-
 
 class FriendshipRequest(models.Model):
     from_user = models.ForeignKey(
@@ -70,14 +67,9 @@ class FriendshipRequest(models.Model):
         )
 
     def clean(self):
-        try:
-            if self.from_user == self.to_user:
-                raise ValidationError("Users can't create a friendship request to themselves")
-        except (
-            FriendshipRequest.from_user.RelatedObjectDoesNotExist,
-            FriendshipRequest.to_user.RelatedObjectDoesNotExist
-        ):
-            pass
+        if self.from_user == self.to_user:
+            raise ValidationError("Users can't create a friendship request to themselves")
+
         
     def save(self, *args, **kwargs):
         self.clean()
@@ -130,7 +122,6 @@ class Friend(models.Model):
         except IntegrityError:
             pass
         
-
     def delete(self, *args, **kwargs):
         return Friend.objects.filter(
             Q(from_user=self.from_user, to_user=self.to_user) |
