@@ -63,6 +63,9 @@ class TaskShare(models.Model):
         related_name='shares'
     )
 
+    def __str__(self):
+        return f'{self.user} shares {self.task}'
+
 
 class TaskNotification(models.Model):
     task = models.ForeignKey(
