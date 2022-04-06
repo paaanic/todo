@@ -51,6 +51,19 @@ class Task(models.Model):
         super().save(*args, **kwargs)
 
 
+class TaskShare(models.Model):
+    task = models.ForeignKey(
+        Task,
+        on_delete=models.CASCADE,
+        related_name='shares'
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='shares'
+    )
+
+
 class TaskNotification(models.Model):
     task = models.ForeignKey(
         Task,
