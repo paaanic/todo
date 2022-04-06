@@ -29,9 +29,15 @@ class TaskIndexView(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        all_tasks = Task.objects.all().order_by('-create_date')
+        all_tasks = (
+            Task.objects.filter(author=self.request.user)
+            .order_by('-create_date')
+        )
         context['active_tasks'] = [t for t in all_tasks if t.active]
-        context['done_tasks'] = Task.objects.filter(done=True).order_by('-done_date')
+        context['done_tasks'] = (
+            Task.objects.filter(author=self.request.user, done=True)
+            .order_by('-done_date')
+        )
         context['failed_tasks'] = [t for t in all_tasks if t.failed]
         return context
 
