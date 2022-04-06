@@ -62,6 +62,7 @@ class TaskShare(models.Model):
         on_delete=models.CASCADE,
         related_name='shares'
     )
+    done = models.BooleanField(default=False)
 
     def __str__(self):
         return f'{self.user} shares {self.task}'
