@@ -3,7 +3,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.forms import Form
 from django.http import HttpResponseRedirect
 from django.urls import reverse_lazy
-from django.views.generic import View, DeleteView, DetailView, ListView
+from django.views.generic import View, DeleteView, DetailView, ListView, TemplateView
 from django.views.generic.detail import SingleObjectMixin, SingleObjectTemplateResponseMixin
 from django.views.generic.edit import FormMixin, ProcessFormView
 
@@ -14,6 +14,26 @@ from .models import Friend, FriendshipRequest
 
 
 user_model = get_user_model()
+
+
+class FriendIndexView(LoginRequiredMixin, TemplateView):
+    template_name = 'friendships/index.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['friends_list'] = (
+            friendships_manager.friends(self.request.user)
+            .order_by('-create_date')
+        )
+        context['friend_requests'] = (
+            friendships_manager.requests(self.request.user)
+            .order_by('-create_date')
+        )
+        context['sent_friend_requests'] = (
+            friendships_manager.sent_requests(self.request.user)
+            .order_by('-create_date')
+        )
+        return context
 
 
 class FriendListView(LoginRequiredMixin, ListView):
