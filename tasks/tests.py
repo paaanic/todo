@@ -9,7 +9,7 @@ from django.test import TestCase
 from django.utils import timezone
 from django.urls import reverse
 
-from .models import Task, TaskNotification
+from .models import Task, TaskNotification, TaskShare
 
 
 def create_test_task(
@@ -338,6 +338,45 @@ class TaskModelTest(TestCase):
             task.done = done
             task.expire_date = expire_date
             self.assertEqual(task.active, answer)
+
+
+class TaskShareModelTest(TestCase):
+    def setUp(self):
+        user_model = get_user_model()
+        self.user = user_model.objects.create(username='author')
+        self.others = [
+            user_model.objects.create(username=f'testuser{i}')
+            for i in range(1, 5)
+        ]
+        self.task = create_test_task(author=self.user)
+
+    def test_str(self):
+        user = self.others[0]
+        share = TaskShare.objects.create(task=self.task, user=user)
+        self.assertEqual(str(share), f'{user} shares {self.task}')
+    
+    def test_authors_cant_share_with_themselves(self):
+        with self.assertRaises(ValidationError):
+            TaskShare.objects.create(task=self.task, user=self.task.author)
+
+    def test_user_with_task_share_backward_relationship(self):
+        tasks = [create_test_task(author=user) for user in self.others]
+        task_shares = [
+            TaskShare.objects.create(task=task, user=self.user) 
+            for task in tasks
+        ]
+        self.assertQuerysetEqual(
+            self.user.shares.all(), task_shares, ordered=False
+        )
+
+    def test_task_with_task_share_backward_relationship(self):
+        task_shares = [
+            TaskShare.objects.create(task=self.task, user=user) 
+            for user in self.others
+        ]
+        self.assertQuerysetEqual(
+            self.task.shares.all(), task_shares, ordered=False
+        )
 
 
 class TaskNotificationModelTest(TestCase):
