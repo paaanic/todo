@@ -7,7 +7,12 @@ app_name = 'friendships'
 urlpatterns = [
     path(
         'friends/', 
-        views.FriendListView.as_view(),
+        views.FriendIndexView.as_view(),
+        name='index'
+    ),
+    path(
+        'friends/all/', 
+        views.FriendIndexView.as_view(),
         name='list'
     ),
     path(
