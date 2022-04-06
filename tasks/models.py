@@ -67,6 +67,14 @@ class TaskShare(models.Model):
     def __str__(self):
         return f'{self.user} shares {self.task}'
 
+    def clean(self):
+        if self.user == self.task.author:
+            raise ValidationError("Task authors can't share tasks with themselves")
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
+
 
 class TaskNotification(models.Model):
     task = models.ForeignKey(
