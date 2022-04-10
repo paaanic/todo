@@ -57,18 +57,31 @@ class TaskShare(models.Model):
         on_delete=models.CASCADE,
         related_name='shares'
     )
-    user = models.ForeignKey(
+    from_user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='shares'
+        related_name='sent_task_shares'
+    )
+    to_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='task_shares'
     )
     done = models.BooleanField(default=False)
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['task', 'to_user'],
+                name='unique_task_share'
+            )
+        ]
+
     def __str__(self):
-        return f'{self.user} shares {self.task}'
+        return f'{self.from_user} shares {self.task} with {self.to_user}'
 
     def clean(self):
-        if self.user == self.task.author:
+        if self.to_user == self.task.author:
             raise ValidationError("Task authors can't share tasks with themselves")
 
     def save(self, *args, **kwargs):

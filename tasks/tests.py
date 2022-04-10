@@ -1,15 +1,20 @@
 from datetime import timedelta
 from itertools import product
 from time import sleep
+from venv import create
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.forms.models import model_to_dict
-from django.test import TestCase
+from django.test import TestCase, TransactionTestCase
 from django.utils import timezone
 from django.urls import reverse
 
 from .models import Task, TaskNotification, TaskShare
+from friendships.models import Friend
+
+
+user_model = get_user_model()
 
 
 def create_test_task(
@@ -25,6 +30,12 @@ def create_test_task(
         comment=comment,
         expire_date=expire_date
     )   
+
+
+def create_test_friend(*, user):
+    user_friend = user_model.objects.create(username='testfriend')
+    Friend.objects.create(from_user=user_friend, to_user=user)
+    return user_friend
 
 
 def create_test_notification(*, task, dt_before_expire=timedelta(minutes=1)):
@@ -299,6 +310,52 @@ class TaskDoneViewTest(TestCase):
         self.assertEqual(response.status_code, 403)
 
 
+class TaskShareCreateViewTest(TransactionTestCase):
+    def setUp(self):
+        self.author = get_user_model().objects.create(username='testuser')
+        self.friend = create_test_friend(user=self.author)
+        self.task = create_test_task(author=self.author)
+        self.create_form = {
+            'to_username': self.friend.username
+        }
+
+    def test_url(self):
+        response = self.client.get(f'/tasks/{self.task.id}/shares/new/')
+        self.assertEqual(response.status_code, 200)
+
+    def test_url_name(self):
+        url = reverse('tasks:share_create', args=(self.task.id,))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_use_correct_template(self):
+        url = reverse('tasks:share', args=(self.task.id,))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'tasks/task_share_create.html')
+
+    def test_create_task_share(self):
+        url = reverse('tasks:share', args=(self.task.id,))
+        response = self.client.post(url, self.create_form)
+        self.assertEqual(response.status_code, 302)
+        new_task_share = TaskShare.objects.last()
+        self.assertEqual(new_task_share.task, self.task)
+        self.assertEqual(new_task_share.to_user, self.friend)
+
+    def test_allowed_to_share_only_with_friend(self):
+        pass
+
+    def test_allowed_to_share_only_own_or_shared_with_tasks(self):
+        pass
+
+    def test_login_required(self):
+        self.client.logout()
+        url = reverse('tasks:share', args=(self.task.id,))
+        response = self.client.post(url, self.create_form, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.request['PATH_INFO'], reverse('login'))
+
+
 class TaskModelTest(TestCase):
     def setUp(self):
         self.author = get_user_model().objects.create(username='testuser')
@@ -352,27 +409,60 @@ class TaskShareModelTest(TestCase):
 
     def test_str(self):
         user = self.others[0]
-        share = TaskShare.objects.create(task=self.task, user=user)
-        self.assertEqual(str(share), f'{user} shares {self.task}')
-    
+        share = TaskShare.objects.create(
+            task=self.task,
+            from_user=self.user,
+            to_user=user
+        )
+        self.assertEqual(
+            str(share), f'{self.user} shares {self.task} with {user}'
+        )
+
+    def test_clean(self):
+        with self.assertRaises(ValidationError):
+            TaskShare.objects.create(
+            task=self.task,
+            from_user=self.user,
+            to_user=self.user
+        )
+        TaskShare.objects.create(
+            task=self.task,
+            from_user=self.user,
+            to_user=self.others[0]
+        )
+
+    def test_save(self):
+        task_share = TaskShare(
+            task=self.task,
+            from_user=self.user,
+            to_user=self.others[0]
+        )
+        task_share.save()
+
     def test_authors_cant_share_with_themselves(self):
         with self.assertRaises(ValidationError):
-            TaskShare.objects.create(task=self.task, user=self.task.author)
-
+            TaskShare.objects.create(
+                task=self.task,
+                from_user=self.task.author,
+                to_user=self.task.author
+            )
+            
     def test_user_with_task_share_backward_relationship(self):
         tasks = [create_test_task(author=user) for user in self.others]
         task_shares = [
-            TaskShare.objects.create(task=task, user=self.user) 
-            for task in tasks
+            TaskShare.objects.create(
+                task=task, from_user=task.author, to_user=self.user
+            ) for task in tasks
         ]
         self.assertQuerysetEqual(
-            self.user.shares.all(), task_shares, ordered=False
+            self.user.task_shares.all(), task_shares, ordered=False
         )
 
     def test_task_with_task_share_backward_relationship(self):
         task_shares = [
-            TaskShare.objects.create(task=self.task, user=user) 
-            for user in self.others
+            TaskShare.objects.create(
+                task=self.task, from_user=self.user, to_user=user
+            ) for user in self.others
         ]
         self.assertQuerysetEqual(
             self.task.shares.all(), task_shares, ordered=False
