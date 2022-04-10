@@ -17,6 +17,11 @@ urlpatterns = [
         name='notif_create'
     ),
     path(
+        '<int:task_id>/shares/', 
+        views.TaskShareListView.as_view(), 
+        name='task_shares'
+    ),
+    path(
         '<int:task_id>/shares/new/', 
         views.TaskShareCreateView.as_view(), 
         name='share_create'

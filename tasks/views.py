@@ -4,7 +4,7 @@ from django.http import HttpResponseForbidden, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
-from django.views.generic import TemplateView, View
+from django.views.generic import ListView, TemplateView, View
 from django.views.generic.detail import (
     SingleObjectMixin,
     SingleObjectTemplateResponseMixin
@@ -150,17 +150,27 @@ class TaskShareCreateView(
         try:
             to_user = user_model.objects.get(username=to_username)
         except user_model.DoesNotExist:
-            return self.form_invalid()
+            pass
+        else:
+            TaskShare.objects.create(
+                task=task, from_user=self.request.user, to_user=to_user
+            )
 
-        TaskShare.objects.create(
-            task=task, from_user=self.request.user, to_user=to_user
-        )
         return HttpResponseRedirect(self.get_success_url())
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs['user'] = self.request.user
         return kwargs
+
+
+class TaskShareListView(ListView):
+    model = TaskShare
+    template_name = 'tasks/task_shares.html'
+    context_object_name = 'task_shares'
+
+    def get_queryset(self):
+        return TaskShare.objects.filter(task__id=self.kwargs.get('task_id'))
 
 
 class TaskNotificationCreateView(

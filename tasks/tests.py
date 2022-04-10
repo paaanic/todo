@@ -17,6 +17,13 @@ from friendships.models import Friend
 user_model = get_user_model()
 
 
+def create_bunch_of_test_users(n_users=3):
+    return (
+        user_model.objects.create(username=uname) 
+        for uname in (f'user{i}' for i in range(1, n_users + 1))
+    )
+
+
 def create_test_task(
         *, 
         title="Test title", 
@@ -366,6 +373,43 @@ class TaskShareCreateViewTest(TransactionTestCase):
         response = self.client.post(url, self.create_form, follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.request['PATH_INFO'], reverse('login'))
+
+
+class TaskShareListViewTest(TransactionTestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create(username='testuser')
+        self.client.force_login(self.user)
+        self.task = create_test_task(author=self.user)
+        self.friends = [
+            Friend.objects.create(from_user=self.user, to_user=user) 
+            for user in create_bunch_of_test_users(5)
+        ]
+        self.task_shares = [
+            TaskShare.objects.create(
+                task=self.task, from_user=self.user, to_user=friend.to_user
+            ) for friend in self.friends
+        ]
+
+    def test_url(self):
+        response = self.client.get(f'/tasks/{self.task.id}/shares/')
+        self.assertEqual(response.status_code, 200)
+
+    def test_url_name(self):
+        url = reverse('tasks:task_shares', args=(self.task.id,))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_use_correct_template(self):
+        url = reverse('tasks:task_shares', args=(self.task.id,))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'tasks/task_shares.html')
+
+    def test_content(self):
+        url = reverse('tasks:task_shares', args=(self.task.id,))
+        response = self.client.get(url)
+        for task_share in self.task_shares:
+            self.assertContains(response, task_share.to_user)
 
 
 class TaskModelTest(TestCase):
