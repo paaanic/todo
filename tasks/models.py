@@ -81,8 +81,10 @@ class TaskShare(models.Model):
         return f'{self.from_user} shares {self.task} with {self.to_user}'
 
     def clean(self):
-        if self.to_user == self.task.author:
-            raise ValidationError("Task authors can't share tasks with themselves")
+        if self.from_user == self.to_user:
+            raise ValidationError("You can't share tasks with yourself")
+        elif self.to_user == self.task.author:
+            raise ValidationError("You can't share a task with it's author")
 
     def save(self, *args, **kwargs):
         self.clean()
