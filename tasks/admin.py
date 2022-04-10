@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Task, TaskNotification
+from .models import Task, TaskNotification, TaskShare
 
 
 class TaskNotificationInline(admin.StackedInline):
@@ -15,3 +15,4 @@ class TaskAdmin(admin.ModelAdmin):
 
 admin.site.register(Task, TaskAdmin)
 admin.site.register(TaskNotification)
+admin.site.register(TaskShare)
