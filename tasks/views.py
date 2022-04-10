@@ -1,5 +1,7 @@
+from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponseForbidden, HttpResponseRedirect
+from django.shortcuts import get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.views.generic import TemplateView, View
@@ -10,21 +12,25 @@ from django.views.generic.detail import (
 from django.views.generic.edit import (
     CreateView,
     DeleteView,
+    FormMixin,
     ModelFormMixin,
     ProcessFormView,
     UpdateView
 )
 
+from tasks.forms import TaskShareForm
+
 from .mixins import (
     UserIsTaskAuthorTestMixin, 
     UserIsTaskAuthorNotificationTestMixin
 )
-from .models import Task, TaskNotification
+from .models import Task, TaskNotification, TaskShare
 
 
-class TaskIndexView(
-    LoginRequiredMixin, TemplateView
-):
+user_model = get_user_model()
+
+
+class TaskIndexView(LoginRequiredMixin, TemplateView):
     template_name = 'tasks/index.html'
 
     def get_context_data(self, **kwargs):
@@ -113,11 +119,56 @@ class TaskRepeatView(
         return super().form_valid(form)
 
 
+class TaskShareCreateView(
+    LoginRequiredMixin,
+    SingleObjectTemplateResponseMixin,
+    FormMixin,
+    ProcessFormView
+):
+    model = TaskShare
+    form_class = TaskShareForm
+    template_name = 'tasks/task_share_create.html'
+    success_url = reverse_lazy('tasks:index')
+
+    def get(self, request, *args, **kwargs):
+        get_object_or_404(Task, pk=self.kwargs.get('task_id'))
+        self.object = None
+        return self.render_to_response(self.get_context_data())
+
+    def post(self, request, *args, **kwargs):
+        self.object = None
+        form = self.get_form()
+        if form.is_valid():
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
+
+    def form_valid(self, form):
+        task = Task.objects.get(pk=self.kwargs.get('task_id'))
+        to_username = form.cleaned_data.get('to_username')
+
+        try:
+            to_user = user_model.objects.get(username=to_username)
+        except user_model.DoesNotExist:
+            return self.form_invalid()
+
+        TaskShare.objects.create(
+            task=task, from_user=self.request.user, to_user=to_user
+        )
+        return HttpResponseRedirect(self.get_success_url())
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
+
 class TaskNotificationCreateView(
     LoginRequiredMixin, UserIsTaskAuthorNotificationTestMixin, CreateView
 ):
     model = TaskNotification
     template_name = 'tasks/notif_create.html'
+    success_url = 'tasks:index'
 
     def form_valid(self, form):
         form.instance.task = Task.objects.get(pk=self.kwargs['task_id'])
