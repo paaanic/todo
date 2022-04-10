@@ -312,9 +312,10 @@ class TaskDoneViewTest(TestCase):
 
 class TaskShareCreateViewTest(TransactionTestCase):
     def setUp(self):
-        self.author = get_user_model().objects.create(username='testuser')
-        self.friend = create_test_friend(user=self.author)
-        self.task = create_test_task(author=self.author)
+        self.user = get_user_model().objects.create(username='testuser')
+        self.client.force_login(self.author)
+        self.friend = create_test_friend(user=self.user)
+        self.task = create_test_task(author=self.user)
         self.create_form = {
             'to_username': self.friend.username
         }
@@ -329,13 +330,13 @@ class TaskShareCreateViewTest(TransactionTestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_use_correct_template(self):
-        url = reverse('tasks:share', args=(self.task.id,))
+        url = reverse('tasks:share_create', args=(self.task.id,))
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'tasks/task_share_create.html')
 
     def test_create_task_share(self):
-        url = reverse('tasks:share', args=(self.task.id,))
+        url = reverse('tasks:share_create', args=(self.task.id,))
         response = self.client.post(url, self.create_form)
         self.assertEqual(response.status_code, 302)
         new_task_share = TaskShare.objects.last()
@@ -343,14 +344,25 @@ class TaskShareCreateViewTest(TransactionTestCase):
         self.assertEqual(new_task_share.to_user, self.friend)
 
     def test_allowed_to_share_only_with_friend(self):
-        pass
+        not_friend = user_model.objects.create(username='notfriend')
+        url = reverse('tasks:share_create', args=(self.task.id,))
+        response = self.client.post(url, {'to_username': not_friend.username})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'You can only share tasks with friends')
 
-    def test_allowed_to_share_only_own_or_shared_with_tasks(self):
-        pass
+    def test_allowed_to_share_only_own_or_shared_tasks(self):
+        some_other_user = user_model.objects.create(username='someuser')
+        task = create_test_task(author=some_other_user)
+        url = reverse('tasks:share_create', args=(task.id,))
+        response = self.client.post(url, {'to_username': self.friend.username})
+        self.assertEqual(response.status_code, 405)
+        TaskShare.objects.create(task=task, from_user=some_other_user, to_user=self.user)
+        response = self.client.post(url, {'to_username': self.friend.username})
+        self.assertEqual(response.status_code, 200)
 
     def test_login_required(self):
         self.client.logout()
-        url = reverse('tasks:share', args=(self.task.id,))
+        url = reverse('tasks:share_create', args=(self.task.id,))
         response = self.client.post(url, self.create_form, follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.request['PATH_INFO'], reverse('login'))
@@ -425,9 +437,15 @@ class TaskShareModelTest(TestCase):
             from_user=self.user,
             to_user=self.user
         )
+        with self.assertRaises(ValidationError):
+            TaskShare.objects.create(
+            task=self.task,
+            from_user=self.others[0],
+            to_user=self.task.author
+        )
         TaskShare.objects.create(
             task=self.task,
-            from_user=self.user,
+            from_user=self.task.author,
             to_user=self.others[0]
         )
 
@@ -446,7 +464,7 @@ class TaskShareModelTest(TestCase):
                 from_user=self.task.author,
                 to_user=self.task.author
             )
-            
+
     def test_user_with_task_share_backward_relationship(self):
         tasks = [create_test_task(author=user) for user in self.others]
         task_shares = [
