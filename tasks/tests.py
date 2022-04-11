@@ -1,10 +1,10 @@
 from datetime import timedelta
 from itertools import product
 from time import sleep
-from venv import create
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.forms.models import model_to_dict
 from django.test import TestCase, TransactionTestCase
 from django.utils import timezone
@@ -23,7 +23,7 @@ def create_bunch_of_test_users(n_users=3):
         for uname in (f'user{i}' for i in range(1, n_users + 1))
     )
 
-
+@transaction.atomic
 def create_test_task(
         *, 
         title="Test title", 
@@ -65,7 +65,7 @@ class TaskIndexViewTest(TestCase):
 
     def test_login_required(self):
         self.client.logout()
-        response = self.client.get(reverse('tasks.index'), follow=True)
+        response = self.client.get(reverse('tasks:index'), follow=True)
         self.assertEqual(response.request['PATH_INFO'], reverse('login'))
 
 
@@ -312,13 +312,9 @@ class TaskDoneViewTest(TestCase):
 
 class TaskShareCreateViewTest(TransactionTestCase):
     def setUp(self):
-        self.user = get_user_model().objects.create(username='testuser')
-        self.client.force_login(self.author)
-        self.friend = create_test_friend(user=self.user)
+        self.user = user_model.objects.create(username='testuser')
+        self.client.force_login(self.user)
         self.task = create_test_task(author=self.user)
-        self.create_form = {
-            'to_username': self.friend.username
-        }
 
     def test_url(self):
         response = self.client.get(f'/tasks/{self.task.id}/shares/new/')
@@ -337,33 +333,26 @@ class TaskShareCreateViewTest(TransactionTestCase):
 
     def test_create_task_share(self):
         url = reverse('tasks:share_create', args=(self.task.id,))
-        response = self.client.post(url, self.create_form)
+        friend_user = user_model.objects.create(username='testfriend')
+        Friend.objects.create(
+            from_user=self.user, to_user=friend_user
+        )
+        response = self.client.post(url, {
+            'to_username': friend_user.id,
+            'comment': 'testcomment'
+        })
         self.assertEqual(response.status_code, 302)
-        new_task_share = TaskShare.objects.last()
-        self.assertEqual(new_task_share.task, self.task)
-        self.assertEqual(new_task_share.to_user, self.friend)
-
-    def test_allowed_to_share_only_with_friend(self):
-        not_friend = user_model.objects.create(username='notfriend')
-        url = reverse('tasks:share_create', args=(self.task.id,))
-        response = self.client.post(url, {'to_username': not_friend.username})
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'You can only share tasks with friends')
-
-    def test_allowed_to_share_only_own_or_shared_tasks(self):
-        some_other_user = user_model.objects.create(username='someuser')
-        task = create_test_task(author=some_other_user)
-        url = reverse('tasks:share_create', args=(task.id,))
-        response = self.client.post(url, {'to_username': self.friend.username})
-        self.assertEqual(response.status_code, 405)
-        TaskShare.objects.create(task=task, from_user=some_other_user, to_user=self.user)
-        response = self.client.post(url, {'to_username': self.friend.username})
-        self.assertEqual(response.status_code, 200)
+        try:
+            TaskShare.objects.get(
+                task=self.task, from_user=self.user, to_user=friend_user
+            )
+        except TaskShare.DoesNotExist:
+            self.fail("TaskShare wasn't created")
 
     def test_login_required(self):
         self.client.logout()
         url = reverse('tasks:share_create', args=(self.task.id,))
-        response = self.client.post(url, self.create_form, follow=True)
+        response = self.client.post(url, {}, follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.request['PATH_INFO'], reverse('login'))
 
@@ -388,18 +377,18 @@ class TaskShareListViewTest(TransactionTestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_url_name(self):
-        url = reverse('tasks:task_shares', args=(self.task.id,))
+        url = reverse('tasks:share_list', args=(self.task.id,))
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
 
     def test_use_correct_template(self):
-        url = reverse('tasks:task_shares', args=(self.task.id,))
+        url = reverse('tasks:share_list', args=(self.task.id,))
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'tasks/task_shares.html')
 
     def test_content(self):
-        url = reverse('tasks:task_shares', args=(self.task.id,))
+        url = reverse('tasks:share_list', args=(self.task.id,))
         response = self.client.get(url)
         for task_share in self.task_shares:
             self.assertContains(response, task_share.to_user)
