@@ -21,10 +21,9 @@ from django.views.generic.edit import (
 from tasks.forms import TaskShareForm
 
 from .mixins import (
-    UserIsTaskAuthorTestMixin, 
-    UserIsTaskAuthorNotificationTestMixin
+    UserIsTaskAuthorTestMixin
 )
-from .models import Task, TaskNotification, TaskShare
+from .models import Task, TaskShare
 
 
 user_model = get_user_model()
@@ -45,6 +44,13 @@ class TaskIndexView(LoginRequiredMixin, TemplateView):
             .order_by('-done_date')
         )
         context['failed_tasks'] = [t for t in all_tasks if t.failed]
+        shared_tasks = (
+            TaskShare.objects.filter(to_user=self.request.user)
+            .order_by('-task__create_date')
+        )
+        context['active_shared_tasks'] = [
+            tsh for tsh in shared_tasks if tsh.active
+        ]
         return context
 
 
@@ -171,22 +177,3 @@ class TaskShareListView(ListView):
 
     def get_queryset(self):
         return TaskShare.objects.filter(task__id=self.kwargs.get('task_id'))
-
-
-class TaskNotificationCreateView(
-    LoginRequiredMixin, UserIsTaskAuthorNotificationTestMixin, CreateView
-):
-    model = TaskNotification
-    template_name = 'tasks/notif_create.html'
-    success_url = 'tasks:index'
-
-    def form_valid(self, form):
-        form.instance.task = Task.objects.get(pk=self.kwargs['task_id'])
-        return super().form_valid(form)
-
-
-class TaskNotificationDeleteView(
-    LoginRequiredMixin, UserIsTaskAuthorNotificationTestMixin, DeleteView
-):
-    model = TaskNotification
-    template_name = 'tasks/notif_delete.html'
