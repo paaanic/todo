@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db import IntegrityError
 from django.http import HttpResponseForbidden, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse, reverse_lazy
@@ -21,7 +22,8 @@ from django.views.generic.edit import (
 from tasks.forms import TaskShareForm
 
 from .mixins import (
-    UserIsTaskAuthorTestMixin
+    UserIsTaskAuthorTestMixin,
+    UserIsTaskShareToUserTestMixin
 )
 from .models import Task, TaskShare
 
@@ -127,6 +129,7 @@ class TaskRepeatView(
 
 class TaskShareCreateView(
     LoginRequiredMixin,
+    UserIsTaskAuthorTestMixin,
     SingleObjectTemplateResponseMixin,
     FormMixin,
     ProcessFormView
@@ -158,9 +161,13 @@ class TaskShareCreateView(
         except user_model.DoesNotExist:
             pass
         else:
-            TaskShare.objects.create(
-                task=task, from_user=self.request.user, to_user=to_user
-            )
+            try:
+                TaskShare.objects.create(
+                    task=task, from_user=self.request.user, to_user=to_user
+                )
+            except IntegrityError:
+                form.add_error(None, "You've already shared this task with this user")
+                return self.form_invalid(form)
 
         return HttpResponseRedirect(self.get_success_url())
 
@@ -168,6 +175,9 @@ class TaskShareCreateView(
         kwargs = super().get_form_kwargs()
         kwargs['user'] = self.request.user
         return kwargs
+
+    def get_object(self):
+        return Task.objects.get(pk=self.kwargs.get('task_id'))
 
 
 class TaskShareListView(ListView):
@@ -177,3 +187,22 @@ class TaskShareListView(ListView):
 
     def get_queryset(self):
         return TaskShare.objects.filter(task__id=self.kwargs.get('task_id'))
+
+
+class TaskShareDoneView(
+    LoginRequiredMixin,
+    UserIsTaskShareToUserTestMixin,
+    SingleObjectMixin,
+    View
+):
+    model = TaskShare
+    success_url = reverse_lazy('tasks:index')
+
+    def post(self, request, *args, **kwargs):
+        task_share = self.get_object()
+        task_share.done = True
+        task_share.save()
+        return HttpResponseRedirect(self.get_success_url())
+
+    def get_success_url(self):
+        return self.success_url
