@@ -29,7 +29,7 @@ class Task(models.Model):
     def complete(self):
         now = timezone.now()
 
-        for share in self.shares:
+        for share in self.shares.all():
             share.done = True
             share.done_date = now
 
