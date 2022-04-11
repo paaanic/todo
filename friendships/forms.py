@@ -1,8 +1,9 @@
 from django.contrib.auth import get_user_model
-from django.forms import CharField, Form, Textarea, TextInput, ValidationError
+from django.forms import CharField, Form, ModelChoiceField, Textarea
 
 from . import manager as friendship_manager
 from .models import FriendshipRequest
+from .widgets import SelectFriendWidget
 
 
 user_model = get_user_model()
@@ -55,4 +56,26 @@ class FriendshipRequestForm(Form):
                 'to_username', f'You have already sent a request to {to_username}'
             )
 
-        
+
+class FriendModelChoiceField(ModelChoiceField):
+    def __init__(self, user, **kwargs):
+        self._user = user
+        super().__init__(
+            queryset=None,
+            label='Select friend',
+            empty_label=None,
+            initial=None,
+            widget=SelectFriendWidget(), **kwargs)
+
+    def label_from_instance(self, obj):
+        return obj.from_user.username
+
+    @property
+    def user(self):
+        return self._user
+
+    @user.setter
+    def user(self, value):
+        self._user = value
+        if self._user is not None:
+            self.queryset = self._user.friends.all()
