@@ -12,23 +12,13 @@ urlpatterns = [
     path('<int:pk>/done/', views.TaskDoneView.as_view(), name='done'),
     path('<int:pk>/repeat/', views.TaskRepeatView.as_view(), name='repeat'),
     path(
-        '<int:task_id>/notifications/new/', 
-        views.TaskNotificationCreateView.as_view(), 
-        name='notif_create'
-    ),
-    path(
         '<int:task_id>/shares/', 
         views.TaskShareListView.as_view(), 
-        name='task_shares'
+        name='share_list'
     ),
     path(
         '<int:task_id>/shares/new/', 
         views.TaskShareCreateView.as_view(), 
         name='share_create'
-    ),
-    path(
-        'notifications/<int:pk>/delete/',
-        views.TaskNotificationDeleteView.as_view(),
-        name='notif_delete'
-    ),
+    )
 ]
