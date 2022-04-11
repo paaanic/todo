@@ -16,6 +16,7 @@ class TaskForm(ModelForm):
 
 class TaskShareForm(Form):
     to_username = CharField(label='Username')
+    comment = CharField(max_length=255)
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None)
