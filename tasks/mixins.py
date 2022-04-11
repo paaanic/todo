@@ -18,7 +18,6 @@ class UserIsTaskShareToUserTestMixin(UserPassesTestMixin):
 class UserIsInTaskSharesUsersTestMixin(UserPassesTestMixin):
     def test_func(self):
         task = self.get_object()
-        print(self.request.user, '\n', task.shares.all().values_list('to_user', flat=True))
         return (
             self.request.user.id
             in task.shares.all().values_list('to_user', flat=True)
