@@ -82,10 +82,8 @@ class TaskDoneView(
     model = Task
 
     def post(self, request, *args, **kwargs):
-        now = timezone.now()
         task = self.get_object()
-        task.done = True
-        task.done_date = now
+        task.complete()
         task.save()
         return HttpResponseRedirect(reverse('tasks:index'))
 
