@@ -1,6 +1,6 @@
 <header class="navbar navbar-expand navbar-light bg-light p-3 mb-3 border-bottom">
     <nav class="container-fluid flex-wrap">
-        <a class="navbar-brand fw-bold" href="{% url 'tasks:index' %}">Todo</a>
+        <a class="navbar-brand fw-bold" href="{% url 'tasks:index' %}">todo</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -20,15 +20,19 @@
                     addTaskEl.innerHTML = "<a href='/tasks/new/'><i class='bi-clipboard-plus' role='img' aria-label='addTask'></i></a>";
                 } else {
                     addTaskEl.setAttribute("class", "ms-auto me-3");
-                    addTaskEl.innerHTML = "<a class='btn btn-primary' href='/tasks/new/'>Add new task</a>";
+                    addTaskEl.innerHTML = "<a class='btn btn-sm btn-primary' href='/tasks/new/'>Add new task</a>";
                 }
             </script>
             
             <div class="dropdown">
-                <a href="#" class="d-block link-dark text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
-                {{ user.username }}
+                <a href="#" class="d-block text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
+                    <img src="{% url 'avatars:get' user.username %}" width="40" height="40" class="rounded-circle">
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end text-small mt-2" aria-labelledby="dropdownUser1">
+                    <li class="text-center fw-bold">@{{ user.username }}</li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="{% url 'tasks:index'%}">Tasks</a></li>
+                    <li><a class="dropdown-item" href="{% url 'friendships:index'%}">Friends</a></li>
                     <li><a class="dropdown-item" href="{% url 'password_change'%}">Change password</a></li>
                     <li><hr class="dropdown-divider"></li>
 
