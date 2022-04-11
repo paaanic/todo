@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block title %}List of friends{% endblock title %}
+
+{% block header %}{% include 'header.html' %}{% endblock header %}
+    
+{% block content %}
+
+{% if friend_list|length == 0 %}
+<div class="jumbotron align-self-center">
+    <h2 class="display-4">Oops...</h2>
+    <p class="lead">You don't have friends for now. If you want to add any, ask them for their usernames. </p>
+    <p class="lead">
+    <a class="btn btn-primary btn-lg" href="{% url 'friendships:create_friendship_request' %}" role="button">Add friend</a>
+    </p>
+</div>
+{% else %}
+<div class="container">
+  {% for friend in friend_list %}
+  <div class="row p-2" style="border: 1px solid #f1f2f2; padding: 20px; background: #f8f8f8; border-radius: 4px; margin-bottom: 20px;">
+    <div class="col-md-2 col-sm-2">
+      <img src="{% url 'avatars:get' friend.from_user.username %}" alt="user" width="80" height="80" class="rounded-circle">
+    </div>
+    <div class="col-md-7 col-sm-7">
+      <h5>@{{ friend.from_user.username }}</h5>
+      <p class="text-muted">Friends since {{ friend.create_date }}</p>
+    </div>
+    <div class="col-md-3 col-sm-3 text-end">
+      <button class="btn btn-sm btn-primary pull-right">Remove</button>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% endblock content %}

@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% load crispy_forms_tags %}
+
+{% block title %}Remove friend{% endblock title %}
+
+{% block header %}{% include 'header.html' %}{% endblock header %}
+
+{% block content %}
+
+<jumbotron>
+<form action="" method="post">{% csrf_token %}
+    <button class="btn btn-primary" type="submit">Remove</button>
+</form>
+</jumbotron>
+
+{% endblock content %}

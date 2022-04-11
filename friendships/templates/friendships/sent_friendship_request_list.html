@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}Friend request{% endblock title %}
+
+{% block header %}{% include 'header.html' %}{% endblock header %}
+    
+{% block content %}
+
+{% if sent_friend_requests|length == 0 %}
+<div class="jumbotron align-self-center">
+    <p class="lead">You don't have any sent requests for now. </p>
+</div>
+{% else %}
+<ul>
+    {% for friend_request in sent_friend_requests %}
+    <li>
+        <p>{{ friend_request.to_user.username }}</p>
+        <p>{{ friend_request.message }} </p>
+    </li>
+    {% endfor %}
+</ul>
+{% endif %}
+
+{% endblock content %}

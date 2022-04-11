@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+
+{% block title %}Friends{% endblock title %}
+
+{% block header %}{% include 'header.html' %}{% endblock header %}
+    
+{% block content %}
+
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-8">
+        {% if friend_list|length == 0 %}
+        <div class="jumbotron align-self-center">
+            <h2 class="display-4">Oops...</h2>
+            <p class="lead">You don't have friends for now. If you want to add any, ask them for their usernames. </p>
+            <p class="lead">
+                <a class="btn btn-primary btn-lg" href="{% url 'friendships:create_friendship_request' %}" role="button">Add friend</a>
+            </p>
+        </div>
+        {% else %}
+        {% for friend in friend_list %}
+        <div class="row p-2" style="border: 1px solid #f1f2f2; padding: 20px; background: #f8f8f8; border-radius: 4px; margin-bottom: 20px;">
+            <div class="col-md-2 col-sm-2">
+                <img src="{% url 'avatars:get' friend.from_user.username %}" alt="user" width="80" height="80" class="rounded-circle">
+            </div>
+            <div class="col-md-7 col-sm-7 align-self-center">
+                <h5>@{{ friend.from_user.username }}</h5>
+                <p class="text-muted">Friends since {{ friend.create_date }}</p>
+            </div>
+            <div class="dropdown col-md-3 col-sm-3 text-end align-self-center">
+                <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" id="dropdownFriendMenuButton{{ forloop.counter }}" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-list"></i>
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="dropdownFriendMenuButton{{ forloop.counter }}">
+                    <li><a class="dropdown-item" href="#">Send message</a></li>
+                    <li><a class="dropdown-item" href="#">Shared tasks</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <form action="{% url 'friendships:delete' friend.from_user.username %}" method="post">{% csrf_token %}
+                        <li><button class="dropdown-item" type="submit">Remove friend</button></li>
+                    </form>
+                  </ul>
+            </div> 
+        </div>
+        {% endfor %}
+        {% endif %}
+    </div>
+    <div class="col-md-4">
+        <div class="row">
+            <div class="d-grid gap-2 mb-3">
+                <button class="btn btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFriendRequests" aria-expanded="false" aria-controls="collapseFriendRequests" style="border: 1px solid #f1f2f2;">
+                    Friend requests
+                    <span class="badge rounded-pill bg-primary">
+                        {{ friend_requests|length }}
+                        <span class="visually-hidden">friend requests</span>
+                    </span>
+                </button>
+            </div>
+            {% if friend_requests|length == 0 %}
+            <div class="collapse" id="collapseFriendRequests">
+            {% else %}
+            <div class="collapse show" id="collapseFriendRequests">
+            {% endif %}
+                {% if friend_requests|length == 0 %}
+                <div class="jumbotron align-self-center" style="border: 1px solid #f1f2f2; padding: 20px; background: #f8f8f8; border-radius: 4px; margin-bottom: 20px;">
+                    <h1 class="display-6">Zero...</h1>
+                    <p class="lead">You don't have any friends request for now.</p>
+                    <p class="lead">
+                        <a class="btn btn-primary btn-lg" href="{% url 'friendships:create_friendship_request' %}" role="button">Add friend</a>
+                    </p>
+                </div>
+                {% else %}
+                {% for friend_request in friend_requests %}
+                <div class="row ms-1 me-1" style="border: 1px solid #f1f2f2; background: #f8f8f8; border-radius: 4px; margin-bottom: 20px;">
+                    <div class="col-md-9 col-sm-9 p-1 d-flex justify-content-start text-center">
+                        <img src="{% url 'avatars:get' friend_request.from_user.username %}" alt="user" width="40" height="40" class="rounded-circle">
+                        <h5 class="ms-3 mt-1">@{{ friend_request.from_user.username }}</h5>
+                    </div>
+                    <div class="col-md-3 col-sm-3 align-self-center p-2 text-end">
+                        <form action="" method="post">{% csrf_token %}
+                            <div class="btn-group" role="group">
+                                <button type="submit" formaction="{% url 'friendships:accept_friendship_request' friend_request.id %}" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-person-check"></i>
+                                </button>
+                                <button type="submit" formaction="{% url 'friendships:reject_friendship_request' friend_request.id %}" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-person-x"></i>
+                                </button>
+                                <a href="{% url 'friendships:friendship_request_detail' friend_request.id %}" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-search"></i>
+                                </a>
+                            </div>
+                        </form>                  
+                    </div>
+                </div>
+                {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+        <div class="row">
+            <div class="d-grid gap-2 mb-3">
+                <button class="btn btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSentFriendRequests" aria-expanded="false" aria-controls="collapseSentFriendRequests" style="border: 1px solid #f1f2f2;">
+                    Sent friend requests
+                    <span class="badge rounded-pill bg-primary">
+                        {{ sent_friend_requests|length }}
+                        <span class="visually-hidden">friend requests</span>
+                    </span>
+                </button>
+            </div>
+            {% if friend_requests|length == 0 %}
+            <div class="collapse" id="collapseSentFriendRequests">
+            {% else %}
+            <div class="collapse show" id="collapseSentFriendRequests">
+            {% endif %}
+                {% if sent_friend_requests|length == 0 %}
+                <div class="jumbotron align-self-center" style="border: 1px solid #f1f2f2; padding: 20px; background: #f8f8f8; border-radius: 4px; margin-bottom: 20px;">
+                    <h1 class="display-6">Zero...</h1>
+                    <p class="lead">You don't have any pending sent friends request for now.</p>
+                    <p class="lead">
+                        <a class="btn btn-primary btn-lg" href="{% url 'friendships:create_friendship_request' %}" role="button">Add friend</a>
+                    </p>
+                </div>
+                {% else %}
+                {% for friend_request in sent_friend_requests %}
+                <div class="row ms-1 me-1" style="border: 1px solid #f1f2f2; background: #f8f8f8; border-radius: 4px; margin-bottom: 20px;">
+                    <div class="col p-1 d-flex justify-content-start text-center">
+                        <img src="{% url 'avatars:get' friend_request.to_user.username %}" alt="user" width="40" height="40" class="rounded-circle">
+                        <h5 class="ms-3 mt-1">@{{ friend_request.to_user.username }}</h5>
+                    </div>  
+                </div>
+                {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+  </div>
+</div>
+
+{% endblock content %}

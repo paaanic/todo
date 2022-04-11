@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block title %}Friendship request{% endblock title %}
+
+{% block header %}{% include 'header.html' %}{% endblock header %}
+
+{% block content %}
+<div class="jumbotron align-self-center">
+    <h2 class="display-6">Do you want to become friends with @{{ friend_req.from_user.username }}?</h2>
+    {% if friend_req.message %}
+    <p class="lead"><span class="fw-light">@{{ friend_req.from_user.username }}:</span> {{ friend_req.message }}</p>
+    {% else %}
+    p class="lead">No message has been provided with request.</p>
+    {% endif %}
+    <div class="lead d-flex">
+        <form class="me-2" action="{% url 'friendships:accept_friendship_request' friend_req.id %}" method="post">{% csrf_token %}
+            <button class="btn btn-primary" type="submit">Accept</button>
+        </form>
+        <form action="{% url 'friendships:reject_friendship_request' friend_req.id %}" method="post">{% csrf_token %}
+            <button class="btn btn-primary" type="submit">Reject</button>
+        </form>
+    </div>
+  </div>
+
+
+{% endblock content %}

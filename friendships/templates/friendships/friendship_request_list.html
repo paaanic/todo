@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block title %}Friend request{% endblock title %}
+
+{% block header %}{% include 'header.html' %}{% endblock header %}
+    
+{% block content %}
+
+{% if friend_requests|length == 0 %}
+<div class="jumbotron align-self-center">
+    <p class="lead">You don't have any friend requests for now. </p>
+</div>
+{% else %}
+<div class="container-fluid">
+    <div class="row">
+      {% for friend_request in friend_requests %}
+        <div class="col-sm-6 col-md-4 col-lg-3 col-xl-3 p-2">
+          <div class="card h-100">
+            <div class="card-header">
+              Friend request
+            </div>
+            <div class="card-body">
+              <h5 class="card-title">from @{{ friend_request.from_user.username }}</h5>
+              <p class="card-text">
+                {% if friend_request.message %}
+                  {{ friend_request.message }}
+                {% else %}
+                  No message provided.
+                {% endif %}
+              </p>
+              <div class="d-flex">
+                <div class="row ms-auto">
+                    <div class="col p-0">
+                        <form action="{% url 'friendships:accept_friendship_request' friend_request.id %}" method="post">{% csrf_token %}
+                            <button class="btn btn-primary" type="submit">Accept</button>
+                        </form>
+                    </div>
+                    <div class="col p-0 me-1 ms-2">
+                        <form action="{% url 'friendships:reject_friendship_request' friend_request.id %}" method="post">{% csrf_token %}
+                            <button class="btn btn-primary" type="submit">Reject</button>
+                        </form>
+                    </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+{% endif %}
+
+{% endblock content %}
