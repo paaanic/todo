@@ -1,7 +1,6 @@
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.views.generic import TemplateView
-from httplib2 import Http
 
 
 class IndexView(TemplateView):
