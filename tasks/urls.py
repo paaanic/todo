@@ -20,5 +20,10 @@ urlpatterns = [
         '<int:task_id>/shares/new/', 
         views.TaskShareCreateView.as_view(), 
         name='share_create'
+    ),
+    path(
+        'shares/<int:pk>/done/', 
+        views.TaskShareDoneView.as_view(), 
+        name='share_done'
     )
 ]
