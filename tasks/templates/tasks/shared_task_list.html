@@ -1,0 +1,39 @@
+{% for task_share in active_shared_tasks %}
+<div class="card h-100 mb-3">
+    <div class="card-header d-flex">
+        <div>
+            {% if task_share.task.expire_date %}
+                Expires at {{ task_share.task.expire_date }}
+            {% else %}
+                No expiration
+            {% endif %}
+        </div>
+        <div class="text-muted ms-auto">
+            Shared by @{{ task_share.from_user.username }}
+        </div>
+        <div class="ms-2">
+            <a href="{% url 'tasks:share_create' task_share.task.id %}" class="ms-auto">
+                <i class="bi-share"></i>
+            </a>
+        </div>
+    </div>
+
+    <div class="card-body">
+      <h5 class="card-title">{{ task_share.task.title }}</h5>
+      <p class="card-text">
+        {% if task_share.comment %}
+          {{ task_share.comment }}
+        {% else %}
+          No comment provided.
+        {% endif %}
+      </p>
+      <div class="d-flex">
+        <div class="ms-auto">
+          <form action="{% url 'tasks:share_done' task_share.id %}" method="post">{% csrf_token %}
+            <button class="btn btn-primary" type="submit">Done</button>
+          </form>
+        </div>
+      </div>
+    </div>
+</div>
+{% endfor %}

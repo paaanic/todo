@@ -1,0 +1,142 @@
+<nav class="nav nav-pills flex-column flex-sm-row mb-3">
+    <button class="flex-sm-fill text-sm-center nav-link active" id="tasks-active-tab" data-bs-toggle="pill" data-bs-target="#tasks-active" type="button" role="tab" aria-controls="tasks-active" aria-selected="true">
+      Active
+    </button>
+    <button class="flex-sm-fill text-sm-center nav-link" id="tasks-done-tab" data-bs-toggle="pill" data-bs-target="#tasks-done" type="button" role="tab" aria-controls="tasks-done" aria-selected="false">
+      Done
+    </button>
+    <button class="flex-sm-fill text-sm-center nav-link" id="tasks-failed-tab" data-bs-toggle="pill" data-bs-target="#tasks-failed" type="button" role="tab" aria-controls="tasks-failed" aria-selected="false">
+      Failed
+    </button>
+</nav>
+  
+  <div class="tab-content" id="pills-tabContent">
+    <div class="tab-pane fade show active" id="tasks-active" role="tabpanel" aria-labelledby="tasks-active-tab">
+      {% if active_tasks|length == 0 %}
+      <div class="jumbotron align-self-center">
+        <h2 class="display-4">Oops...</h2>
+        <p class="lead">There're no active tasks now. Don't be lazy.</p>
+        <p class="lead">
+          <a class="btn btn-primary btn-lg" href="{% url 'tasks:create' %}" role="button">Create new task</a>
+        </p>
+      </div>
+      {% else %}
+        <div class="container-fluid">
+          <div class="row">
+            {% for task in active_tasks %}
+              <div class="col-sm-6 col-md-4 col-lg-4 col-xl-4 p-2">
+                <div class="card h-100">
+                  <div class="card-header d-flex">
+                    <div>
+                      {% if task.expire_date %}
+                        Expires at {{ task.expire_date }}
+                      {% else %}
+                        No expiration
+                      {% endif %}
+                    </div>
+                    <a href="{% url 'tasks:share_create' task.id %}" class="ms-auto">
+                      <i class="bi-share"></i>
+                    </a>
+                  </div>
+                  <div class="card-body">
+                    <h5 class="card-title">{{ task.title }}</h5>
+                    <p class="card-text">
+                      {% if task.comment %}
+                        {{ task.comment }}
+                      {% else %}
+                        Here could be your comment.
+                      {% endif %}
+                    </p>
+                    <div class="d-flex">
+                      <div class="ms-auto">
+                        <form action="{% url 'tasks:done' task.id %}" method="post">
+                          <a href="{% url 'tasks:update' task.id %}" class="btn btn-primary">Edit</a>
+                          {% csrf_token %}
+                          <button class="btn btn-primary" type="submit">Done</button>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+    </div>
+    <div class="tab-pane fade" id="tasks-done" role="tabpanel" aria-labelledby="tasks-done-tab">
+      {% if done_tasks|length == 0 %}
+        <div class="jumbotron align-self-center">
+          <h2 class="display-4">Hmm...</h2>
+          <p class="lead">Seems like there are no done tasks yet.</p>
+        </div>
+      {% else %}
+      <div class="container-fluid">
+        <div class="row">
+          {% for task in done_tasks %}
+            <div class="col-sm-6 col-md-4 col-lg-4 col-xl-4 p-2">
+              <div class="card h-100">
+                <div class="card-header">
+                  Done at {{ task.done_date }}
+                </div>
+                <div class="card-body">
+                  <h5 class="card-title">{{ task.title }}</h5>
+                  <p class="card-text">
+                    {% if task.comment %}
+                      {{ task.comment }}
+                    {% else %}
+                      Here could be your comment.
+                    {% endif %}
+                  </p>
+                  <div class="d-flex">
+                    <div class="ms-auto">
+                      <a href="{% url 'tasks:repeat' task.id %}" class="btn btn-primary" type="submit">Repeat</a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+    <div class="tab-pane fade" id="tasks-failed" role="tabpanel" aria-labelledby="tasks-failed-tab">
+      {% if failed_tasks|length == 0 %}
+      <div class="jumbotron align-self-center">
+        <h2 class="display-4">Well done!</h2>
+        <p class="lead">There're no failed tasks.</p>
+       
+      </div>
+      {% else %}
+      <div class="container-fluid">
+        <div class="row">
+          {% for task in failed_tasks %}
+            <div class="col-sm-6 col-md-4 col-lg-4 col-xl-4 p-2">
+              <div class="card h-100">
+                <div class="card-header">
+                  Expired at {{ task.expire_date }}
+                </div>
+                <div class="card-body">
+                  <h5 class="card-title">{{ task.title }}</h5>
+                  <p class="card-text">
+                    {% if task.comment %}
+                      {{ task.comment }}
+                    {% else %}
+                      Here could be your comment.
+                    {% endif %}
+                  </p>
+                  <div class="d-flex">
+                    <div class="ms-auto">
+                      <a href="{% url 'tasks:repeat' task.id %}" class="btn btn-primary" type="submit">Repeat</a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>

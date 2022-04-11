@@ -1,0 +1,5 @@
+<ul>
+    {% for task_share in task_shares %}
+    <li>{{ task_share.to_user.username }}</li>
+    {% endfor %}
+</ul>
