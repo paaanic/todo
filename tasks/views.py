@@ -4,7 +4,6 @@ from django.db import IntegrityError
 from django.http import HttpResponseForbidden, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse, reverse_lazy
-from django.utils import timezone
 from django.views.generic import ListView, TemplateView, View
 from django.views.generic.detail import (
     SingleObjectMixin,
@@ -22,8 +21,10 @@ from django.views.generic.edit import (
 from tasks.forms import TaskShareForm
 
 from .mixins import (
+    UserPassesAnyTestMixin,
+    UserIsInTaskSharesUsersTestMixin,
     UserIsTaskAuthorTestMixin,
-    UserIsTaskShareToUserTestMixin
+    UserIsTaskShareToUserTestMixin,
 )
 from .models import Task, TaskShare
 
@@ -127,7 +128,9 @@ class TaskRepeatView(
 
 class TaskShareCreateView(
     LoginRequiredMixin,
-    UserIsTaskAuthorTestMixin,
+    UserPassesAnyTestMixin(
+        UserIsTaskAuthorTestMixin, UserIsInTaskSharesUsersTestMixin
+    ),
     SingleObjectTemplateResponseMixin,
     FormMixin,
     ProcessFormView
