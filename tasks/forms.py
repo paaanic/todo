@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-from django.forms import CharField, Form, ModelForm
+from django.forms import CharField, Form, ModelForm, Textarea
 
 from .models import Task
 from friendships.manager import are_friends
@@ -16,7 +16,7 @@ class TaskForm(ModelForm):
 
 class TaskShareForm(Form):
     to_username = CharField(label='Username')
-    comment = CharField(max_length=255)
+    comment = CharField(max_length=255, widget=Textarea())
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None)
