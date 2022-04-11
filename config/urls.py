@@ -22,5 +22,6 @@ urlpatterns = [
     path('', include('pages.urls')),
     path('', include('friendships.urls')),
     path('accounts/', include('accounts.urls')),
+    path('avatars/', include('avatars.urls')),
     path('tasks/', include('tasks.urls'))
 ]

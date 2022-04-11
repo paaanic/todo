@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'crispy_bootstrap5',
 
     'accounts.apps.AccountsConfig',
+    'avatars.apps.AvatarsConfig',
     'friendships.apps.FriendshipsConfig',
     'pages.apps.PagesConfig',
     'tasks.apps.TasksConfig',
