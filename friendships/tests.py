@@ -19,6 +19,27 @@ def create_bunch_of_test_users(n_users=3):
     )
 
 
+class FriendIndexViewTest(TransactionTestCase):
+    def setUp(self):
+        self.user1, self.user2, self.user3 = create_bunch_of_test_users()
+        self.client.force_login(self.user1)
+        Friend.objects.create(from_user=self.user1, to_user=self.user2)
+        Friend.objects.create(from_user=self.user1, to_user=self.user3)
+
+    def test_url(self):
+        response = self.client.get('/friends/')
+        self.assertEqual(response.status_code, 200)
+
+    def test_url_name(self):
+        response = self.client.get(reverse('friendships:index'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_use_correct_template(self):
+        response = self.client.get(reverse('friendships:index'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'friendships/index.html')
+
+
 class FriendListViewTest(TransactionTestCase):
     def setUp(self):
         self.user1, self.user2, self.user3 = create_bunch_of_test_users()

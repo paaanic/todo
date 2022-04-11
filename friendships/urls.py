@@ -12,7 +12,7 @@ urlpatterns = [
     ),
     path(
         'friends/all/', 
-        views.FriendIndexView.as_view(),
+        views.FriendListView.as_view(),
         name='list'
     ),
     path(

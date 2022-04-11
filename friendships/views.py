@@ -21,7 +21,7 @@ class FriendIndexView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['friends_list'] = (
+        context['friend_list'] = (
             friendships_manager.friends(self.request.user)
             .order_by('-create_date')
         )
@@ -55,7 +55,7 @@ class FriendshipRequestCreateView(
     model = FriendshipRequest
     form_class = FriendshipRequestForm
     template_name = 'friendships/add.html'
-    success_url = reverse_lazy('friendships:sent_friendship_request_list')
+    success_url = reverse_lazy('friendships:index')
         
     def get(self, request, *args, **kwargs):
         self.object = None
@@ -87,7 +87,7 @@ class FriendshipRequestCreateView(
 
 class FriendDeleteView(LoginRequiredMixin, DeleteView):
     template_name = 'friendships/delete.html'
-    success_url = reverse_lazy('friendships:list')
+    success_url = reverse_lazy('friendships:index')
     slug_field = 'to_user__username'
     slug_url_kwarg = 'username'
 
@@ -128,7 +128,7 @@ class BaseFriendshipRequestActionView(
 ):
     model = FriendshipRequest
     form_class = Form
-    success_url = reverse_lazy('friendships:list')
+    success_url = reverse_lazy('friendships:index')
 
     def action(self, friendship_request):
         raise NotImplementedError("Provide action method for handling friendship request")
