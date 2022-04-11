@@ -25,6 +25,16 @@ class Task(models.Model):
             not self.done and
             (self.expire_date is None or (timezone.now() <= self.expire_date))
         )
+    
+    def complete(self):
+        now = timezone.now()
+
+        for share in self.shares:
+            share.done = True
+            share.done_date = now
+
+        self.done = True
+        self.done_date = now
 
     @property
     def failed(self):
@@ -67,6 +77,7 @@ class TaskShare(models.Model):
         on_delete=models.CASCADE,
         related_name='task_shares'
     )
+    comment = models.CharField(max_length=255, blank=True)
     done = models.BooleanField(default=False)
 
     class Meta:
@@ -76,6 +87,10 @@ class TaskShare(models.Model):
                 name='unique_task_share'
             )
         ]
+
+    @property
+    def active(self):
+        return not self.done and self.task.active
 
     def __str__(self):
         return f'{self.from_user} shares {self.task} with {self.to_user}'
@@ -88,31 +103,4 @@ class TaskShare(models.Model):
 
     def save(self, *args, **kwargs):
         self.clean()
-        super().save(*args, **kwargs)
-
-
-class TaskNotification(models.Model):
-    task = models.ForeignKey(
-        Task,
-        on_delete=models.CASCADE,
-        related_name='notifications'
-    )
-    dt_before_expire = models.DurationField()
-
-    def __str__(self):
-        return f'{self.dt_before_expire} before {self.task.expire_date}'
-
-    def clean(self):
-        if self.task.expire_date is None:
-            raise ValidationError(
-                'You cannot add notifications to tasks with no expire_date ' 
-                'specified'
-            )
-        if self.task.done or self.task.failed:
-            raise ValidationError(
-                'You cannot add notifications to failed or done tasks'
-            )
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
         super().save(*args, **kwargs)
