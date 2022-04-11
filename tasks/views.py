@@ -155,6 +155,7 @@ class TaskShareCreateView(
     def form_valid(self, form):
         task = Task.objects.get(pk=self.kwargs.get('task_id'))
         to_username = form.cleaned_data.get('to_username')
+        comment = form.cleaned_data.get('comment')
 
         try:
             to_user = user_model.objects.get(username=to_username)
@@ -163,7 +164,10 @@ class TaskShareCreateView(
         else:
             try:
                 TaskShare.objects.create(
-                    task=task, from_user=self.request.user, to_user=to_user
+                    task=task,
+                    from_user=self.request.user,
+                    to_user=to_user,
+                    comment=comment
                 )
             except IntegrityError:
                 form.add_error(None, "You've already shared this task with this user")
