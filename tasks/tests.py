@@ -10,7 +10,7 @@ from django.test import TestCase, TransactionTestCase
 from django.utils import timezone
 from django.urls import reverse
 
-from .models import Task, TaskNotification, TaskShare
+from .models import Task, TaskShare
 from friendships.models import Friend
 
 
@@ -43,13 +43,6 @@ def create_test_friend(*, user):
     user_friend = user_model.objects.create(username='testfriend')
     Friend.objects.create(from_user=user_friend, to_user=user)
     return user_friend
-
-
-def create_test_notification(*, task, dt_before_expire=timedelta(minutes=1)):
-    return TaskNotification.objects.create(
-        task=task,
-        dt_before_expire=dt_before_expire
-    )
 
 
 class TaskIndexViewTest(TestCase):
@@ -530,32 +523,17 @@ class TaskShareModelTest(TestCase):
             self.task.shares.all(), task_shares, ordered=False
         )
 
+    def test_share_task_with_users(self):
+        for user in self.others:
+            TaskShare.objects.create(
+                task=self.task, from_user=self.user, to_user=user
+            )
 
-class TaskNotificationModelTest(TestCase):
-    def setUp(self):
-        self.author = get_user_model().objects.create(username='testuser')
-    
-    def test_str_repr(self):
-        task = create_test_task(author=self.author)
-        notification = create_test_notification(task=task)
-        self.assertEqual(
-            str(notification), 
-            f'{notification.dt_before_expire} before {task.expire_date}'
-        )
-
-    def test_add_notification(self):
-        task = create_test_task(author=self.author)
-        create_test_notification(
-            task=task,
-            dt_before_expire=timedelta(minutes=5)
-        )
-        notification = TaskNotification.objects.last()
-        self.assertEqual(notification.task, task)
-        self.assertEqual(
-            notification.dt_before_expire, timedelta(minutes=5)
-        )
-
-    def test_add_notification_to_task_with_no_expire_date(self):
-        task = create_test_task(author=self.author, expire_date=None)
-        with self.assertRaises(ValidationError):
-            create_test_notification(task=task)
+    def test_share_two_tasks_with_same_user(self):
+        user = self.others[0]
+        task1 = self.task
+        task2 = create_test_task(author=self.user)
+        for task in (task1, task2):
+            TaskShare.objects.create(
+                task=task, from_user=self.user, to_user=user
+            )
