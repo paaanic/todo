@@ -29,7 +29,7 @@ class TelegramDispatcher(BaseDispatcher):
 
         try:
             cls._send_message(
-                notification.dispatch_user_id, notification.comment
+                notification.dispatch_user_id, notification.message
             )
         finally:
             notification.delete()
