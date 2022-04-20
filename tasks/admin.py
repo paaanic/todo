@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Task, TaskShare
+from .models import Task, TaskShare, TaskNotification
 
 
 class TaskAdmin(admin.ModelAdmin):
@@ -9,3 +9,4 @@ class TaskAdmin(admin.ModelAdmin):
 
 admin.site.register(Task, TaskAdmin)
 admin.site.register(TaskShare)
+admin.site.register(TaskNotification)
