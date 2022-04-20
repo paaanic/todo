@@ -6,12 +6,18 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.forms.models import model_to_dict
-from django.test import TestCase, TransactionTestCase
+from django.test import (
+    SimpleTestCase,
+    RequestFactory,
+    TestCase,
+    TransactionTestCase
+)
 from django.utils import timezone
 from django.urls import reverse
 
-from .models import Task, TaskShare
 from friendships.models import Friend
+from .models import Task, TaskShare
+from .utils import get_client_ip, get_tzname_by_ip
 
 
 user_model = get_user_model()
@@ -394,6 +400,10 @@ class TaskShareListViewTest(TransactionTestCase):
             self.assertContains(response, task_share.to_user)
 
 
+class TaskNotificationCreateViewTest(TestCase):
+    pass
+
+
 class TaskModelTest(TestCase):
     def setUp(self):
         self.author = get_user_model().objects.create(username='testuser')
@@ -526,3 +536,22 @@ class TaskShareModelTest(TestCase):
             TaskShare.objects.create(
                 task=task, from_user=self.user, to_user=user
             )
+
+
+class TaskNotificationModelTest(TestCase):
+    def test_create(self):
+        pass
+
+
+class TestUtils(SimpleTestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+
+    def test_get_ip(self):
+        request = self.factory.get(reverse('tasks:index'))
+        ip = get_client_ip(request)
+        self.assertEqual(ip, request.META['REMOTE_ADDR'])
+
+    def test_get_tzname_by_ip(self):
+        test_ip = '58.171.216.130'
+        self.assertEqual(get_tzname_by_ip(test_ip), 'Australia/Sydney')
