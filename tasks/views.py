@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import IntegrityError
@@ -224,5 +225,7 @@ class TaskNotificationCreateView(
     def form_valid(self, form):
         task_id = self.kwargs.get('task_id')
         task = get_object_or_404(Task, id=task_id)
-        form.instance.task = task        
+        form.instance.task = task
+        form.instance.dispatch_user_id = \
+            settings.NOTIFICATIONS_TEST_TELEGRAM_USER_ID
         return super().form_valid(form)

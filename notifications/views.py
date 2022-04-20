@@ -4,7 +4,7 @@ from django.views.generic.edit import CreateView
 
 
 class NotificationBaseCreateView(CreateView):
-    fields = ['comment', 'datetime', 'dispatchers']
+    fields = ['datetime', 'dispatchers']
 
     def form_valid(self, form):
         self.object = form.save()
