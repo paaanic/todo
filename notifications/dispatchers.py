@@ -23,16 +23,22 @@ class TelegramDispatcher(BaseDispatcher):
             raise ImproperlyConfigured(
                 "You have to set NOTIFICATIONS_TELEGRAM_BOT_TOKEN in django settings before using this"
             )
+
+        if notification.dispatch_user_id is None:
+            raise ValueError("You have to set 'dispatch_user_id' before using this method")
+            
         try:
-            cls._send_message(notification.message)
+            cls._send_message(
+                notification.dispatch_user_id, notification.comment
+            )
         finally:
             notification.delete()
 
     @classmethod
-    def _send_message(cls, msg):
+    def _send_message(cls, chat_id, msg):
         endpoint = \
-            f'/bot{settings.NOTIFICATIONS_TELEGRAM_BOT_TOKEN}/sendMessage'
+            f'bot{settings.NOTIFICATIONS_TELEGRAM_BOT_TOKEN}/sendMessage'
         requests.post(
             cls._API_URL + endpoint,
-            params={'chat_id': '@maximspeshilov', 'text': msg}
+            params={'chat_id': chat_id, 'text': msg}
         )
