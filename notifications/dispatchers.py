@@ -9,7 +9,7 @@ class BaseDispatcher(ABC):
     @classmethod
     @abstractmethod
     def dispatch(cls, notification):
-        pass
+        raise NotImplementedError("You have to override this method to use")
 
 
 class TelegramDispatcher(BaseDispatcher):
@@ -26,7 +26,7 @@ class TelegramDispatcher(BaseDispatcher):
 
         if notification.dispatch_user_id is None:
             raise ValueError("You have to set 'dispatch_user_id' before using this method")
-            
+
         try:
             cls._send_message(
                 notification.dispatch_user_id, notification.comment
