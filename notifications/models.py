@@ -70,5 +70,8 @@ class BaseNotification(models.Model):
             create_notification.s(dispatcher.id, *args_)
             for dispatcher in self.dispatchers.all()
         ]
-        task_group = group(tasks, eta=self.datetime)()
+        task_group = group(
+            tasks, eta=self.datetime, acks_late=True, ignore_result=True
+        )
+        task_group()
         self.task_group_id = task_group.id
