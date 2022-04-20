@@ -42,17 +42,6 @@ class BaseNotificationModelTest(TestNotificationMixin, TestCase):
         self.assertEqual(notif.message, self.test_notif_kwargs['message'])
         self.assertEqual(notif.datetime, self.test_notif_kwargs['datetime'])
 
-    def test_str(self):
-        notif = self.model.objects.create(**self.test_notif_kwargs)
-        self.assertEqual(str(notif), f"Notification: {notif.message}")
-        del self.test_notif_kwargs['comment']
-        notif_with_no_comment = \
-            self.model.objects.create(**self.test_notif_kwargs)
-        self.assertEqual(
-            str(notif_with_no_comment),
-            f"Notification: no comment provided"
-        )
-
     def test_clean(self):
         notif = self.model(**self.test_notif_kwargs)
         notif.clean()
