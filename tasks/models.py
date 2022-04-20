@@ -1,10 +1,9 @@
-from datetime import timedelta
-
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.urls import reverse
 from django.utils import timezone
+
+from notifications.models import BaseNotification
 
 
 class Task(models.Model):
@@ -104,3 +103,11 @@ class TaskShare(models.Model):
     def save(self, *args, **kwargs):
         self.clean()
         super().save(*args, **kwargs)
+
+
+class TaskNotification(BaseNotification):
+    task = models.ForeignKey(
+        Task,
+        on_delete=models.CASCADE,
+        related_name='notifications'
+    )
