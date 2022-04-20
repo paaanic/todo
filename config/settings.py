@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'accounts.apps.AccountsConfig',
     'avatars.apps.AvatarsConfig',
     'friendships.apps.FriendshipsConfig',
+    'notifications.apps.NotificationsConfig',
     'pages.apps.PagesConfig',
     'tasks.apps.TasksConfig',
 ]
@@ -123,7 +124,7 @@ TIME_ZONE = 'Europe/Moscow'
 
 USE_I18N = True
 
-USE_TZ = True
+USE_TZ = False
 
 
 # Static files (CSS, JavaScript, Images)
@@ -153,3 +154,7 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 # Celery settings
 CELERY_BROKER_URL = env.str('CELERY_BROKER_URL')
 CELERY_RESULT_BACKEND = env.str('CELERY_RESULT_BACKEND')
+
+# Notifications settings
+
+NOTIFICATIONS_TELEGRAM_BOT_TOKEN = env.str('NOTIFICATIONS_TELEGRAM_BOT_TOKEN')
