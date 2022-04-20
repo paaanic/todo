@@ -40,7 +40,7 @@ class Dispatcher(models.Model):
 
 
 class BaseNotification(models.Model):
-    comment = models.TextField(max_length=255, blank=True)
+    message = models.TextField(max_length=500, blank=True)
     datetime = models.DateTimeField()
     dispatchers = models.ManyToManyField(
         Dispatcher, related_name='notifications'
@@ -52,8 +52,7 @@ class BaseNotification(models.Model):
         abstract = True
 
     def __str__(self):
-        msg = self.comment if self.comment else "no comment provided"
-        return f"Notification: {msg}"
+        return f"Notification: {self.message}"
 
     def clean(self):
         if self.datetime <= timezone.now():
