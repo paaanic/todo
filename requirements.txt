@@ -1,5 +1,9 @@
+celery[redis]==5.2.6
 crispy-bootstrap5==0.6
 django>=4.0
 django-crispy-forms==1.14.0
 environs==8.0.0
+flower==1.0.0
+pytz==2022.1
 py-avataaars==1.1.2
+requests==2.27.1
