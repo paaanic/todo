@@ -111,3 +111,10 @@ class TaskNotification(BaseNotification):
         on_delete=models.CASCADE,
         related_name='notifications'
     )
+
+    def clean(self):
+        super().clean()
+        try:
+            self.message = f"Notification on {self.task.title}"
+        except:
+            pass
