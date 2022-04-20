@@ -22,6 +22,11 @@ urlpatterns = [
         name='share_create'
     ),
     path(
+        '<int:task_id>/notice/new/',
+        views.TaskNotificationCreateView.as_view(),
+        name='notice_create'
+    ),
+    path(
         'shares/<int:pk>/done/', 
         views.TaskShareDoneView.as_view(), 
         name='share_done'
