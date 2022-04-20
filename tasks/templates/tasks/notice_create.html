@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% load crispy_forms_tags %}
+
+{% block header %}{% include 'header.html' %}{% endblock header %}
+
+{% block content %}
+<form action="" method="post">{% csrf_token %}
+    {{ form|crispy }}
+    <button type="submit" class="btn btn-primary">Add</button>
+</form>
+
+<script>
+    pickerElement = document.getElementById('div_id_datetime')
+    pickerElement.innerHTML = "<label for='id_datetime' class='form-label'>Expire date</label><div class='input-group' id='datetimepicker' data-td-target-input='nearest' data-td-target-toggle='nearest'><input name='datetime' id='id_datetime' type='text' class='form-control' data-td-target='#datetimepicker'/><span class='input-group-text' data-td-target='#datetimepicker' data-td-toggle='datetimepicker'/><span class='bi bi-calendar'></span></span></div>"
+
+    const td = new tempusDominus.TempusDominus(document.getElementById('datetimepicker'), {
+        display: {
+            components: {
+                useTwentyfourHour: true
+            },
+            icons: {
+                time: 'bi bi-clock',
+                date: 'bi bi-calendar',
+                up: 'bi bi-arrow-up',
+                down: 'bi bi-arrow-down',
+                previous: 'bi bi-chevron-left',
+                next: 'bi bi-chevron-right',
+                today: 'bi bi-calendar-check',
+                clear: 'bi bi-trash',
+                close: 'bi bi-x',
+            },
+            buttons: {
+                today: true,
+                clear: true,
+                close: true,
+            },
+        },
+        container: document.querySelector('div#div_datetime'),
+        restrictions: {
+            minDate: new tempusDominus.DateTime()
+        },
+        allowInputToggle: true
+    });
+
+    td.dates.formatInput = function(date) {
+        return moment(date).format("YYYY-MM-DD HH:mm");
+    }
+</script>
+{% endblock content %}
