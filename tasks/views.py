@@ -18,15 +18,15 @@ from django.views.generic.edit import (
     UpdateView
 )
 
-from tasks.forms import TaskShareForm
-
+from .forms import TaskShareForm
+from notifications.views import NotificationBaseCreateView
 from .mixins import (
     UserPassesAnyTestMixin,
     UserIsInTaskSharesUsersTestMixin,
     UserIsTaskAuthorTestMixin,
     UserIsTaskShareToUserTestMixin,
 )
-from .models import Task, TaskShare
+from .models import Task, TaskNotification, TaskShare
 
 
 user_model = get_user_model()
@@ -211,3 +211,18 @@ class TaskShareDoneView(
 
     def get_success_url(self):
         return self.success_url
+
+
+class TaskNotificationCreateView(
+    LoginRequiredMixin,
+    NotificationBaseCreateView
+):
+    model = TaskNotification
+    template_name = 'tasks/notice_create.html'
+    success_url = reverse_lazy('tasks:index')
+
+    def form_valid(self, form):
+        task_id = self.kwargs.get('task_id')
+        task = get_object_or_404(Task, id=task_id)
+        form.instance.task = task        
+        return super().form_valid(form)
