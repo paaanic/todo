@@ -58,6 +58,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
+    'tasks.middleware.UserTimezoneMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -124,7 +125,7 @@ TIME_ZONE = 'Europe/Moscow'
 
 USE_I18N = True
 
-USE_TZ = False
+USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
@@ -154,7 +155,11 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 # Celery settings
 CELERY_BROKER_URL = env.str('CELERY_BROKER_URL')
 CELERY_RESULT_BACKEND = env.str('CELERY_RESULT_BACKEND')
+CELERY_TIMEZONE = 'UTC'
 
 # Notifications settings
 
 NOTIFICATIONS_TELEGRAM_BOT_TOKEN = env.str('NOTIFICATIONS_TELEGRAM_BOT_TOKEN')
+NOTIFICATIONS_TEST_TELEGRAM_USER_ID = env.str('NOTIFICATIONS_TEST_TELEGRAM_USER_ID')
+
+IPGEOLOCATION_API_KEY = env.str('IPGEOLOCATION_API_KEY')
