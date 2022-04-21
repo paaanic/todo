@@ -29,7 +29,7 @@ class TelegramDispatcherTest(SimpleTestCase):
 
         with mock_init:
             notif = BaseNotification(
-                dispatch_user_id='1', comment="Test comment"
+                dispatch_user_id='1', message="Test message"
             )
             with mock.patch.object(notif, 'delete'):
                 TelegramDispatcher.dispatch(notif)
