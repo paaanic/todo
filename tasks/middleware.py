@@ -13,7 +13,6 @@ class UserTimezoneMiddleware:
         try:
             if tzname is None:
                 ip = get_client_ip(request)
-                print(ip)
                 if ip:
                     tzname = get_tzname_by_ip(ip)
                     request.session['user_timezone'] = tzname
