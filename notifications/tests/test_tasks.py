@@ -34,4 +34,3 @@ class TestCreateNotification(AbstractModelMixin, TestCase):
             model_type.model
         )
         mock_dispatch.assert_called_with(self.notif)
-
