@@ -1,0 +1,36 @@
+services:
+  web:
+    build:
+      context: app
+    image: paaanic/projects:todo_web
+    command: gunicorn -b 0.0.0.0:8000 config.wsgi:application
+    volumes: 
+      - ./app:/usr/src/app/
+    ports:
+      - 8000:8000
+
+  redis:
+    image: redis:6.2-alpine
+
+  celery:
+    build:
+      context: app
+    image: paaanic/projects:todo_celery
+    command: celery --app config worker -l INFO
+    volumes:
+      - ./app:/usr/src/app/
+    depends_on:
+      - web
+      - redis
+
+  dashboard:
+    build: 
+      context: app
+    image: paaanic/projects:todo_flower
+    command: celery --app config flower --port=5555 --broker=redis://redis:6379/0
+    ports:
+      - 5555:5555
+    depends_on:
+      - web
+      - redis
+      - celery
